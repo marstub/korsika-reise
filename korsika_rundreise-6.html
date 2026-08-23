@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korsika Rundreise — 13 Tage</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a18;padding:1rem}
+.container{max-width:780px;margin:0 auto;padding:1rem 0}
+.header{margin-bottom:1.25rem}
+.header h1{font-size:21px;font-weight:500;color:#1a1a18;margin-bottom:3px}
+.header p{font-size:13px;color:#73726c}
+.overview{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.5rem}
+.ov-card{background:#eae9e3;border-radius:8px;padding:10px 12px}
+.ov-label{font-size:11px;color:#73726c;margin-bottom:3px}
+.ov-val{font-size:15px;font-weight:500;color:#1a1a18}
+#map-section{margin-bottom:1.5rem}
+#map-section h2{font-size:15px;font-weight:500;color:#1a1a18;margin-bottom:8px}
+#map{width:100%;height:460px;border-radius:12px;border:0.5px solid #d3d1c7}
+.mc{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.mfb{padding:4px 10px;border-radius:999px;border:0.5px solid #b4b2a9;background:#fff;color:#73726c;font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s}
+.mfb.active{background:#1a1a18;color:#fff;border-color:#1a1a18}
+.ml{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.mli{display:flex;align-items:center;gap:5px;font-size:11px;color:#73726c}
+.mld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mh{font-size:11px;color:#b4b2a9;margin-top:5px}
+#route-status{font-size:11px;color:#b4b2a9;margin-top:3px}
+.leaflet-popup-content-wrapper{border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.leaflet-popup-content{margin:10px 13px;font-size:12px;line-height:1.5}
+.pp-day{font-size:10px;color:#73726c;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.pp-name{font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:2px}
+.pp-desc{font-size:11px;color:#73726c}
+.day-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:1.25rem}
+.day-tab{padding:5px 11px;border-radius:8px;border:0.5px solid #b4b2a9;background:#fff;color:#73726c;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.day-tab.active{background:#eae9e3;color:#1a1a18;font-weight:500;border-color:#888780}
+.day-panel{display:none}.day-panel.active{display:block}
+.day-title{font-size:16px;font-weight:500;color:#1a1a18;margin-bottom:3px}
+.day-sub{font-size:12px;color:#73726c;margin-bottom:1rem;line-height:1.5}
+.sum{display:flex;gap:12px;flex-wrap:wrap;padding:8px 12px;border-radius:8px;background:#eae9e3;margin-bottom:1rem}
+.si{font-size:12px;color:#73726c}.si strong{color:#1a1a18;font-weight:500}
+/* ── drive strip ── */
+.drive-strip{display:flex;align-items:center;gap:8px;margin:6px 0 10px 0;padding:6px 10px;border-radius:8px;background:#f0efe9;border:0.5px solid #d3d1c7}
+.drive-icon{font-size:14px;flex-shrink:0}
+.drive-info{flex:1;min-width:0}
+.drive-name{font-size:11px;font-weight:500;color:#1a1a18;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drive-desc{font-size:10px;color:#73726c;margin-top:1px}
+.drive-badges{display:flex;gap:5px;flex-shrink:0}
+.dbadge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.dbadge.km{background:#dbeafe;color:#1e40af}
+.dbadge.dur{background:#dcfce7;color:#166534}
+/* ── stops ── */
+.stop{display:flex;gap:10px;margin-bottom:13px}
+.sl{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.sd{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
+.sd.attraction{background:#dbeafe;color:#1e40af}
+.sd.hotel{background:#dcfce7;color:#166534}
+.sd.flight{background:#fef9c3;color:#854d0e}
+.sd.boat{background:#e0f2fe;color:#0369a1}
+.sd.horse{background:#fce7f3;color:#9d174d}
+.sd.hike{background:#d1fae5;color:#065f46}
+.sd.swim{background:#cffafe;color:#0e7490}
+/* ── attraction photo ── */
+.att-photo{width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:8px;display:block;border:0.5px solid #d3d1c7}
+.att-photo-caption{font-size:9px;color:#b4b2a9;margin-bottom:6px;text-align:right}
+/* ── hotel card ── */
+.hotel-card{margin-top:8px;border:0.5px solid #bbf7d0;border-radius:10px;background:#f0fdf4;overflow:hidden}
+.hotel-card-head{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#dcfce7}
+.hotel-card-stars{color:#f59e0b;font-size:13px;letter-spacing:1px}
+.hotel-card-name{font-size:13px;font-weight:600;color:#1a1a18;flex:1}
+.hotel-card-price{font-size:12px;font-weight:600;color:#166534;white-space:nowrap}
+.hotel-card-body{padding:10px 12px}
+.hotel-card-body p{font-size:12px;color:#374151;line-height:1.6;margin-bottom:5px}
+.hotel-card-body p:last-child{margin-bottom:0}
+.hotel-card-body strong{color:#1a1a18;font-weight:500}
+.hotel-addr{display:flex;gap:6px;align-items:flex-start;margin-bottom:6px;font-size:11px;color:#6b7280}
+.hotel-addr-icon{flex-shrink:0;margin-top:1px}
+.hotel-anfahrt{background:#fff;border:0.5px solid #d1fae5;border-radius:6px;padding:7px 10px;font-size:11px;color:#374151;line-height:1.6;margin-top:6px}
+.hotel-anfahrt strong{color:#065f46;font-size:10px;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:2px}
+.hotel-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.hotel-link{font-size:10px;padding:3px 8px;border-radius:999px;background:#dcfce7;color:#166534;text-decoration:none;border:0.5px solid #86efac}
+.hotel-link:hover{background:#bbf7d0}
+/* swim block */
+.swim-block{margin-top:8px}
+.swim-block-label{font-size:10px;font-weight:600;color:#0e7490;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.swim-spot{border:0.5px solid #a5f3fc;border-radius:8px;background:#f0fdfe;margin-bottom:6px;overflow:hidden}
+.swim-spot-head{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer}
+.swim-spot-head:hover{background:#ecfeff}
+.swim-spot-icon{font-size:14px;flex-shrink:0}
+.swim-spot-title{font-size:12px;font-weight:500;color:#1a1a18;flex:1}
+.swim-spot-meta{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap}
+.swim-badge{font-size:9px;padding:1px 5px;border-radius:999px;font-weight:600;white-space:nowrap}
+.swim-badge.type{background:#cffafe;color:#0e7490}
+.swim-badge.temp{background:#dbeafe;color:#1e40af}
+.swim-badge.fam{background:#fce7f3;color:#9d174d}
+.swim-badge.diff{background:#fef9c3;color:#854d0e}
+.swim-spot-body{display:none;padding:0 10px 9px 36px;font-size:11px;color:#4b5563;line-height:1.6}
+.swim-spot-body.open{display:block}
+.sc{width:1px;background:#d3d1c7;flex:1;min-height:6px;margin:2px 0}
+.sv{flex:1;padding-bottom:6px}
+.st{font-size:10px;color:#73726c;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px}
+.sn{font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:2px;cursor:pointer}
+.sn:hover{color:#3b82f6}.sn.nodtl{cursor:default}.sn.nodtl:hover{color:#1a1a18}
+.sdesc{font-size:12px;color:#73726c;line-height:1.5}
+.stags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.tag{font-size:10px;padding:2px 6px;border-radius:999px;border:0.5px solid #d3d1c7;color:#73726c}
+.tag.horse{background:#fce7f3;border-color:#f9a8d4;color:#9d174d}
+.tag.hike{background:#d1fae5;border-color:#6ee7b7;color:#065f46}
+/* ── details ── */
+.det{display:none;margin-top:8px;padding:10px;border-radius:8px;background:#eae9e3;border:0.5px solid #d3d1c7}
+.det.open{display:block}
+.det p{font-size:12px;color:#73726c;line-height:1.6;margin-bottom:6px}
+.det p:last-child{margin-bottom:0}
+.det strong{color:#1a1a18;font-weight:500}
+.det a{color:#3b82f6;font-size:11px}
+/* ── hike alternatives ── */
+.hike-alts{margin:8px 0 0 0}
+.hike-alts-label{font-size:10px;font-weight:600;color:#065f46;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.hike-alt{border:0.5px solid #a7f3d0;border-radius:8px;background:#f0fdf4;margin-bottom:6px;overflow:hidden}
+.hike-alt-head{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer}
+.hike-alt-head:hover{background:#ecfdf5}
+.hike-alt-num{width:20px;height:20px;border-radius:50%;background:#10b981;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hike-alt-title{font-size:12px;font-weight:500;color:#1a1a18;flex:1}
+.hike-alt-meta{display:flex;gap:4px}
+.hike-badge{font-size:9px;padding:1px 5px;border-radius:999px;font-weight:600}
+.hike-badge.dist{background:#dbeafe;color:#1e40af}
+.hike-badge.diff{background:#fef9c3;color:#854d0e}
+.hike-badge.dur{background:#dcfce7;color:#166534}
+.hike-badge.fam{background:#fce7f3;color:#9d174d}
+.hike-alt-body{display:none;padding:0 10px 9px 38px;font-size:11px;color:#4b5563;line-height:1.6}
+.hike-alt-body.open{display:block}
+/* ── horse block ── */
+.horse-block{border:0.5px solid #f9a8d4;border-radius:8px;background:#fff7fb;padding:10px 12px;margin-top:8px}
+.horse-block h4{font-size:11px;font-weight:600;color:#9d174d;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.horse-block p{font-size:12px;color:#73726c;line-height:1.6;margin-bottom:5px}
+.horse-block p:last-child{margin-bottom:0}
+.horse-block strong{color:#1a1a18;font-weight:500}
+/* ── photos ── */
+.phs{margin-top:8px;padding-top:8px;border-top:0.5px solid #d3d1c7}
+.ph-gallery{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.ph-item{position:relative;border-radius:8px;overflow:hidden;border:0.5px solid #d3d1c7;background:#f5f4f0;cursor:pointer}
+.ph-item img{display:block;object-fit:cover;width:100%;height:100%}
+.ph-item.portrait{width:80px;height:120px}.ph-item.landscape{width:160px;height:100px}
+.ph-item.square{width:100px;height:100px}.ph-item.panorama{width:220px;height:80px}
+.ph-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.ph-num{position:absolute;bottom:3px;left:5px;font-size:9px;color:rgba(255,255,255,.85);font-weight:500;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.pub{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;border:0.5px dashed #b4b2a9;background:transparent;color:#73726c;font-size:11px;cursor:pointer;font-family:inherit}
+.pub:hover{border-color:#3b82f6;color:#3b82f6;background:#eff6ff}
+.phi{display:none}
+.ph-lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;flex-direction:column}
+.ph-lightbox.open{display:flex}
+.ph-lightbox img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+.ph-lb-close{position:absolute;top:16px;right:20px;color:#fff;font-size:28px;cursor:pointer;line-height:1;background:none;border:none}
+.ph-lb-nav{display:flex;gap:16px;margin-top:12px}
+.ph-lb-nav button{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:13px;cursor:pointer}
+.ph-lb-nav button:hover{background:rgba(255,255,255,.28)}
+.ph-lb-info{color:rgba(255,255,255,.7);font-size:12px;margin-top:6px}
+.pc{font-size:10px;color:#b4b2a9;margin-top:4px}
+.tips{margin-top:1.25rem;padding:12px 14px;border-radius:12px;border:0.5px solid #d3d1c7;background:#fff}
+.tips h3{font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:7px}
+.tip{font-size:12px;color:#73726c;line-height:1.6;margin-bottom:3px;padding-left:11px;position:relative}
+.tip::before{content:'→';position:absolute;left:0;color:#b4b2a9}
+.rb{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;margin-left:8px;font-weight:500}
+.rb-nord{background:#dbeafe;color:#1e40af}
+.rb-zentrum{background:#f3e8ff;color:#6b21a8}
+.rb-west{background:#dcfce7;color:#166534}
+.rb-sued{background:#fef9c3;color:#854d0e}
+@media(max-width:500px){.overview{grid-template-columns:repeat(2,1fr)}.dbadge{display:none}}
+</style>
+</head>
+<body>
+<div class="container">
+<div id="ph-lightbox" class="ph-lightbox" onclick="lbClose()">
+  <button class="ph-lb-close" onclick="lbClose()">&#10005;</button>
+  <img id="lb-img" src="" alt="Foto" onclick="event.stopPropagation()">
+  <div class="ph-lb-nav" onclick="event.stopPropagation()">
+    <button id="lb-prev" onclick="lbPrev()">&#8592; zurück</button>
+    <button id="lb-next" onclick="lbNext()">weiter &#8594;</button>
+  </div>
+  <div id="lb-info" class="ph-lb-info"></div>
+</div>
+
+<div class="header">
+  <h1>&#127981; Korsika Rundreise &mdash; 13 Tage</h1>
+  <p>Bastia &rarr; St. Florent &rarr; Corte &rarr; Ajaccio &rarr; Bonifacio &rarr; Porto Vecchio &rarr; Bastia &nbsp;&middot;&nbsp; 30.8.&ndash;11.9.</p>
+</div>
+<div class="overview">
+  <div class="ov-card"><div class="ov-label">Reisedaten</div><div class="ov-val">30.8.–11.9.</div></div>
+  <div class="ov-card"><div class="ov-label">Stationen</div><div class="ov-val">6 Regionen</div></div>
+  <div class="ov-card"><div class="ov-label">Fahrzeug</div><div class="ov-val">Mietwagen</div></div>
+  <div class="ov-card"><div class="ov-label">Gesamt-km</div><div class="ov-val">~650 km</div></div>
+</div>
+
+<div id="map-section">
+  <h2>Kartenübersicht &mdash; Alle Stationen</h2>
+  <div class="mc">
+    <button class="mfb active" onclick="fmap('all',this)">Alle</button>
+    <button class="mfb" onclick="fmap('n',this)" style="border-color:#3b82f6;color:#1d4ed8">Nord</button>
+    <button class="mfb" onclick="fmap('z',this)" style="border-color:#9333ea;color:#6b21a8">Zentrum</button>
+    <button class="mfb" onclick="fmap('w',this)" style="border-color:#22c55e;color:#14532d">West</button>
+    <button class="mfb" onclick="fmap('s',this)" style="border-color:#f59e0b;color:#92400e">Süd</button>
+  </div>
+  <div id="map"></div>
+  <div class="ml">
+    <div class="mli"><div class="mld" style="background:#3b82f6"></div>Nord</div>
+    <div class="mli"><div class="mld" style="background:#9333ea"></div>Zentrum</div>
+    <div class="mli"><div class="mld" style="background:#22c55e"></div>West</div>
+    <div class="mli"><div class="mld" style="background:#f59e0b"></div>Süd</div>
+    <div class="mli"><div style="width:14px;height:14px;border-radius:50%;background:#fff;border:2.5px solid #888;flex-shrink:0"></div>Sehenswürdigkeit</div>
+    <div class="mli"><div style="width:14px;height:14px;background:#fff;border:2.5px solid #888;border-radius:3px;flex-shrink:0"></div>Übernachtung</div>
+  </div>
+  <div id="route-status" style="font-size:11px;color:#b4b2a9;margin-top:3px"></div>
+  <div class="mh">Klick auf Marker = Details &middot; Scrollen / Pinch = Zoom</div>
+</div>
+
+<div class="day-tabs" id="tabs"></div>
+<div id="panels"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script>
+var MS=[
+  {day:1,g:"n",name:"Bastia Altstadt",lat:42.703,lng:9.451,desc:"Tag 1 · Terra Vecchia, Zitadelle",col:"#3b82f6",type:"a"},
+  {day:1,g:"n",name:"St. Florent (N 1–3)",lat:42.681,lng:9.306,desc:"3 Nächte",col:"#3b82f6",type:"h"},
+  {day:2,g:"n",name:"Désert des Agriates",lat:42.670,lng:9.220,desc:"Tag 2 · Wildküste",col:"#3b82f6",type:"a"},
+  {day:2,g:"n",name:"Plage de Saleccia",lat:42.693,lng:9.234,desc:"Tag 2 · Schönster Strand Nord",col:"#3b82f6",type:"a"},
+  {day:3,g:"n",name:"Cap Corse · Nonza",lat:42.793,lng:9.337,desc:"Tag 3 · Schwarzer Strand",col:"#3b82f6",type:"a"},
+  {day:3,g:"n",name:"Patrimonio",lat:42.718,lng:9.362,desc:"Tag 3 · Weinregion",col:"#3b82f6",type:"a"},
+  {day:4,g:"z",name:"Corte (N 4–6)",lat:42.302,lng:9.150,desc:"3 Nächte",col:"#9333ea",type:"h"},
+  {day:4,g:"z",name:"Zitadelle Corte",lat:42.302,lng:9.150,desc:"Tag 4",col:"#9333ea",type:"a"},
+  {day:5,g:"z",name:"Lac de Melo",lat:42.261,lng:9.059,desc:"Tag 5 · Gletschersee 1711m",col:"#9333ea",type:"a"},
+  {day:6,g:"z",name:"Lac de Nino",lat:42.379,lng:8.986,desc:"Tag 6 · Pozzinen",col:"#9333ea",type:"a"},
+  {day:7,g:"w",name:"Ajaccio (N 7–8)",lat:41.920,lng:8.739,desc:"2 Nächte",col:"#22c55e",type:"h"},
+  {day:7,g:"w",name:"Sanguinaires-Inseln",lat:41.858,lng:8.603,desc:"Tag 7 · Sonnenuntergang",col:"#22c55e",type:"a"},
+  {day:8,g:"w",name:"Calanques de Piana",lat:42.238,lng:8.647,desc:"Tag 8 · UNESCO",col:"#22c55e",type:"a"},
+  {day:8,g:"w",name:"Porto",lat:42.267,lng:8.703,desc:"Tag 8 · Genueser Turm",col:"#22c55e",type:"a"},
+  {day:9,g:"s",name:"Bonifacio (N 9–10)",lat:41.388,lng:9.160,desc:"2 Nächte",col:"#f59e0b",type:"h"},
+  {day:9,g:"s",name:"Sartène",lat:41.623,lng:8.974,desc:"Tag 9 · Korsischste Stadt",col:"#f59e0b",type:"a"},
+  {day:10,g:"s",name:"Lavezzi-Inseln",lat:41.333,lng:9.254,desc:"Tag 10 · Naturreservat",col:"#f59e0b",type:"a"},
+  {day:10,g:"s",name:"Plage de Rondinara",lat:41.449,lng:9.238,desc:"Tag 10 · Traumbucht",col:"#f59e0b",type:"a"},
+  {day:11,g:"s",name:"Porto Vecchio (N 11–12)",lat:41.591,lng:9.279,desc:"2 Nächte",col:"#f59e0b",type:"h"},
+  {day:11,g:"s",name:"Plage de Palombaggia",lat:41.531,lng:9.318,desc:"Tag 11 · Reiten + Strand",col:"#f59e0b",type:"a"},
+  {day:12,g:"s",name:"Aiguilles de Bavella",lat:41.774,lng:9.252,desc:"Tag 12 · Wanderung",col:"#f59e0b",type:"a"},
+  {day:13,g:"n",name:"Bastia · Rückflug",lat:42.703,lng:9.451,desc:"Tag 13 · 15:25 Uhr",col:"#3b82f6",type:"f"},
+];
+
+var _map=null,_allMarkers=[],_routeLayers=[],_activeGroup='all';
+function _circleIcon(col,num){return L.divIcon({html:'<div style="width:26px;height:26px;border-radius:50%;background:'+col+';border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;box-shadow:0 1px 5px rgba(0,0,0,.35)">'+num+'</div>',className:'',iconSize:[26,26],iconAnchor:[13,13],popupAnchor:[0,-15]});}
+function _squareIcon(col,num){return L.divIcon({html:'<div style="width:24px;height:24px;border-radius:4px;background:'+col+';border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;box-shadow:0 1px 5px rgba(0,0,0,.35)">'+num+'</div>',className:'',iconSize:[24,24],iconAnchor:[12,12],popupAnchor:[0,-14]});}
+
+var ROUTE_WAYPOINTS=[
+  {g:"n",col:"#3b82f6",stops:[[42.703,9.451],[42.681,9.306],[42.693,9.234],[42.681,9.306]]},
+  {g:"n",col:"#3b82f6",stops:[[42.681,9.306],[42.920,9.400],[42.793,9.337],[42.718,9.362],[42.681,9.306]]},
+  {g:"z",col:"#9333ea",stops:[[42.681,9.306],[42.302,9.150],[42.261,9.059],[42.302,9.150]]},
+  {g:"z",col:"#9333ea",stops:[[42.302,9.150],[42.379,8.986],[42.302,9.150]]},
+  {g:"w",col:"#22c55e",stops:[[42.302,9.150],[41.920,8.739],[41.858,8.603],[41.920,8.739]]},
+  {g:"w",col:"#22c55e",stops:[[41.920,8.739],[42.267,8.703],[42.238,8.647],[41.920,8.739]]},
+  {g:"s",col:"#f59e0b",stops:[[41.920,8.739],[41.623,8.974],[41.388,9.160]]},
+  {g:"s",col:"#f59e0b",stops:[[41.388,9.160],[41.449,9.238],[41.591,9.279]]},
+  {g:"s",col:"#f59e0b",stops:[[41.591,9.279],[41.774,9.252],[41.531,9.318],[41.591,9.279]]},
+  {g:"n",col:"#3b82f6",stops:[[41.591,9.279],[42.703,9.451]]},
+];
+var _osrmBase='https://router.project-osrm.org/route/v1/driving/';
+function _fetchSegment(pts,col,cb){var coords=pts.map(function(p){return p[1]+','+p[0];}).join(';');var xhr=new XMLHttpRequest();xhr.open('GET',_osrmBase+coords+'?overview=full&geometries=geojson',true);xhr.timeout=10000;xhr.onload=function(){try{var d=JSON.parse(xhr.responseText);if(d.code==='Ok'&&d.routes&&d.routes[0]){cb(true,d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];}));}else cb(false,pts);}catch(e){cb(false,pts);}};xhr.onerror=function(){cb(false,pts);};xhr.ontimeout=function(){cb(false,pts);};xhr.send();}
+function _drawRoutes(group){_routeLayers.forEach(function(l){if(_map&&_map.hasLayer(l))_map.removeLayer(l);});_routeLayers=[];var el=document.getElementById('route-status');var segs=ROUTE_WAYPOINTS.filter(function(rg){return group==='all'||rg.g===group;});if(!segs.length){if(el)el.textContent='';return;}if(el)el.textContent='Lade Straßenrouten … (0/'+segs.length+')';var done=0;function loadNext(i){if(i>=segs.length)return;var rg=segs[i];_fetchSegment(rg.stops,rg.col,function(ok,coords){var line=ok?L.polyline(coords,{color:rg.col,weight:3.5,opacity:0.7,lineJoin:'round',lineCap:'round'}):L.polyline(rg.stops,{color:rg.col,weight:2,opacity:0.4,dashArray:'6 5'});line.addTo(_map);_routeLayers.push(line);done++;if(el)el.textContent=done<segs.length?'Lade … ('+done+'/'+segs.length+')':'Straßenrouten geladen.';setTimeout(function(){loadNext(i+1);},250);});}loadNext(0);}
+function _initMap(){if(_map)return;_map=L.map('map',{zoomControl:true,scrollWheelZoom:true}).setView([42.05,9.0],9);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:18}).addTo(_map);MS.forEach(function(s){var icon=s.type==='h'?_squareIcon(s.col,s.day):_circleIcon(s.col,s.day);var m=L.marker([s.lat,s.lng],{icon:icon}).bindPopup('<div class="pp-day">Tag '+s.day+(s.type==='h'?' &middot; Übernachtung':'')+'</div><div class="pp-name">'+s.name+'</div><div class="pp-desc">'+s.desc+'</div>').addTo(_map);m._grp=s.g;_allMarkers.push(m);});_drawRoutes('all');}
+window.fmap=function(g,btn){document.querySelectorAll('.mfb').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');_activeGroup=g;_allMarkers.forEach(function(m){if(g==='all'||m._grp===g){if(!_map.hasLayer(m))m.addTo(_map);}else{if(_map.hasLayer(m))_map.removeLayer(m);}});_drawRoutes(g);};
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(_initMap,120);});}else{setTimeout(_initMap,120);}
+
+/* PHOTO */
+window.toggleDet=function(id){var el=document.getElementById(id);if(el)el.classList.toggle('open');};
+var _photos={},_lb={sid:null,idx:0};
+function _formatClass(w,h){var r=w/h;if(r>2.2)return'panorama';if(r>1.3)return'landscape';if(r<0.75)return'portrait';return'square';}
+function _renderGallery(sid){var gallery=document.getElementById('pg-'+sid),note=document.getElementById('pn-'+sid);if(!gallery)return;var photos=_photos[sid]||[];gallery.innerHTML='';photos.forEach(function(p,i){var div=document.createElement('div');div.className='ph-item '+_formatClass(p.w,p.h);var img=document.createElement('img');img.src=p.src;img.alt='Foto '+(i+1);img.onclick=(function(idx){return function(){_openLb(sid,idx);};})(i);var del=document.createElement('button');del.className='ph-del';del.innerHTML='&#10005;';del.onclick=(function(idx){return function(e){e.stopPropagation();_delPhoto(sid,idx);};})(i);var num=document.createElement('span');num.className='ph-num';num.textContent=(i+1)+'/'+photos.length;div.appendChild(img);div.appendChild(del);div.appendChild(num);gallery.appendChild(div);});if(note)note.textContent=photos.length>0?photos.length+' Foto'+(photos.length>1?'s':'')+' — lokal':'';if(photos.length>0){var det=document.getElementById('det-'+sid);if(det&&!det.classList.contains('open'))det.classList.add('open');}}
+function _delPhoto(sid,idx){if(!_photos[sid])return;_photos[sid].splice(idx,1);_renderGallery(sid);}
+window.trigPh=function(sid){document.getElementById('fi-'+sid).click();};
+window.handlePh=function(sid,inp){var files=Array.from(inp.files);if(!files.length)return;if(!_photos[sid])_photos[sid]=[];var pending=files.length;files.forEach(function(f){var rd=new FileReader();rd.onload=function(e){var img=new Image();img.onload=function(){_photos[sid].push({src:e.target.result,w:img.naturalWidth,h:img.naturalHeight});pending--;if(pending===0)_renderGallery(sid);};img.src=e.target.result;};rd.readAsDataURL(f);});inp.value='';};
+function _openLb(sid,idx){_lb.sid=sid;_lb.idx=idx;var photos=_photos[sid]||[];if(!photos.length)return;document.getElementById('ph-lightbox').classList.add('open');_updateLb();}
+function _updateLb(){var photos=_photos[_lb.sid]||[];if(!photos.length)return;_lb.idx=Math.max(0,Math.min(_lb.idx,photos.length-1));document.getElementById('lb-img').src=photos[_lb.idx].src;document.getElementById('lb-info').textContent=(_lb.idx+1)+' / '+photos.length;document.getElementById('lb-prev').style.display=_lb.idx>0?'':'none';document.getElementById('lb-next').style.display=_lb.idx<photos.length-1?'':'none';}
+window.lbClose=function(){document.getElementById('ph-lightbox').classList.remove('open');};
+window.lbPrev=function(){_lb.idx--;_updateLb();};window.lbNext=function(){_lb.idx++;_updateLb();};
+document.addEventListener('keydown',function(e){var lb=document.getElementById('ph-lightbox');if(!lb||!lb.classList.contains('open'))return;if(e.key==='ArrowLeft')lbPrev();else if(e.key==='ArrowRight')lbNext();else if(e.key==='Escape')lbClose();});
+window.toggleHike=function(id){var el=document.getElementById(id);if(el)el.classList.toggle('open');};
+window.toggleSwim=function(id){var el=document.getElementById(id);if(el)el.classList.toggle('open');};
+
+/* DAYS DATA */
+var DAYS=[
+
+{id:1,region:"nord",title:"Tag 1 (30.8.) — Ankunft Bastia · Fahrt St. Florent",sub:"Ankunft 10:30 · Bastia Altstadt erkunden · Abend am Hafen St. Florent",nacht:"St. Florent (Nacht 1 von 3)",
+drives:[{from:"Flughafen Bastia",to:"St. Florent",km:"38 km",dur:"45 Min",via:"Col de Teghime (536 m) – Panoramapass mit Blick auf beide Küsten",note:"Kurzer Fotostopp am Pass empfohlen"}],
+stops:[
+{t:"flight",tm:"10:30",n:"Ankunft Bastia (BIA)",d:"Mietwagen übernehmen. Korsika-Tempo genießen!",tags:["Mietwagen","BIA Poretta"]},
+{t:"attraction",tm:"11:30 · 1,5 h",n:"Bastia — Terra Vecchia & Zitadelle",d:"Authentischste Stadt Korsikas: Alter Hafen, Barockkirchen, Zitadelle mit Panoramablick.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Bastia_-_Terra_vecchia_from_citadella.jpg/800px-Bastia_-_Terra_vecchia_from_citadella.jpg",alt:"Bastia Terra Vecchia",credit:"© Wikimedia Commons"},
+dtl:"<p><strong>Alter Hafen (Vieux Port):</strong> Malerisches Hafenbecken mit bunten Häusern – Café-Pause am Wasser.</p><p><strong>Kirche St-Jean-Baptiste:</strong> Beeindruckende Barockfassade direkt am Hafen.</p><p><strong>Zitadelle:</strong> Genuesische Festung mit Museum der Korsischen Geschichte.</p>",
+tags:["Alter Hafen","Zitadelle","1–1,5 h"]},
+{t:"attraction",tm:"14:00 · 1,5 h",n:"St. Florent — Hafen & Altstadt",d:"Das 'St-Tropez Korsikas': Yachthafen, Terrassen-Cafés, Zitadelle, Place des Portes.",
+dtl:"<p><strong>Hafen:</strong> Aperitif am Kai mit Meerblick – Atmosphäre abends sehr lebendig.</p><p><strong>Santa Maria Assunta:</strong> Romanische Pisaner Kirche (12. Jh.), 2 km landeinwärts.</p><p><strong>Zitadelle:</strong> Genuesische Festung aus dem 15. Jh.</p>",
+tags:["Hafen","Zitadelle","Aperitif"]},
+{t:"hotel",tm:"ab 16:00",n:"Übernachtung: Boutique Hôtel Basgi Basgi ★★★★",d:"Familiengeführtes Boutique-Hotel, 5 Min von St. Florent, Strand 200 m. 3 Nächte (T1–T3).",
+hotel:{name:"Boutique Hôtel Responsable et Restaurant Basgi Basgi",stars:4,price:"€1.120,63",addr:"Lieu dit Tettola, 20217 Saint-Florent, Korsika",tel:"+33 4 95 37 19 20",desc:"Familiengeführtes Boutique-Hotel mit nachhaltigem Konzept. 28 Zimmer, beheizter Salzwasser-Pool, Gartenanlage, Locavore-Restaurant 'La Table'. Strände Olzo und Tettola in 5 Gehminuten. 'Basgi Basgi' bedeutet auf Korsisch 'Küsschen'.",anfahrt:"Ab Bastia Flughafen: N193/N197 Richtung Ile-Rousse, dann D81 nach Saint-Florent (~38 km, 45 Min). Am Col de Teghime (536 m) kurze Pause für den Panoramablick lohnt sich! Im Ort Richtung 'Tettola' folgen, Hotel liegt ~1,5 km östlich des Hafens auf einer kleinen Anhöhe.",checkin:"16:00",checkout:"11:00",parking:"Kostenlose gesicherte Tiefgarage mit Aufzug",links:[{url:"https://www.hotelbasgi.com/de",label:"hotelbasgi.com"},{url:"https://www.booking.com/hotel/fr/basgi-basgi.html",label:"Booking.com"}]},
+tags:["Übernachtung","3 Nächte T1–T3","Pool","Restaurant"]},
+],tips:["Col de Teghime: kurzer Stopp lohnt sich – Panoramablick auf Nord- und Westküste","St. Florent buchen: im August sehr gefragt – weit im Voraus reservieren","Abendessen: frischer Fisch und korsische Charcuterie am Hafen","⚠️ DRINGEND: Basgi Basgi — laut Booking.com Zahlung noch ausstehend! Bitte sofort bezahlen um Stornierung zu vermeiden (€1.120,63)."]},
+
+{id:2,region:"nord",title:"Tag 2 (31.8.) — Désert des Agriates · Plage de Saleccia",sub:"Bootsshuttle · Schönster Wildstrand Nordkorsikas · Küstenwanderung · Karibik-Feeling",nacht:"St. Florent (Nacht 2 von 3)",
+drives:[],
+stops:[
+{t:"boat",tm:"09:00",n:"Bootsshuttle zum Désert des Agriates",d:"Ab Hafen St. Florent: Shuttle-Boot zum Plage du Lotu (30 Min). Ca. 15–20 € Hin-/Rückfahrt.",
+dtl:"<p><strong>Anbieter:</strong> Taxi-Plages Saint-Florent, Davboat (Tickets am Hafen oder online).</p><p><strong>Alternative:</strong> 4x4-Tour durch das Hinterland buchbar (ST FLO 4x4).</p>",
+tags:["Shuttle-Boot","~15–20 €","Vorab buchen"]},
+{t:"hike",tm:"Ganztag",n:"Wanderungen im Désert des Agriates",d:"Küstenwanderung zwischen Lotu und Saleccia – oder entspannt am Strand liegen.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/D%C3%A9sert_des_Agriates_-_Plage_de_Saleccia.jpg/800px-D%C3%A9sert_des_Agriates_-_Plage_de_Saleccia.jpg",alt:"Plage de Saleccia, Désert des Agriates",credit:"© Wikimedia Commons"},
+hikes:[
+{num:1,title:"Lotu → Saleccia Küstenweg",dist:"4 km",dur:"1,5 h",diff:"Leicht",fam:true,desc:"Schönste und einfachste Route: flach entlang der wilden Küste, kaum Höhenunterschied. Perfekt für die ganze Familie. Wildesel unterwegs! Umkehren wenn genug."},
+{num:2,title:"Lotu → Saleccia über Landesinneres",dist:"5 km",dur:"1,5–2 h",diff:"Leicht-Mittel",fam:true,desc:"Etwas mehr Panorama, kleine Hügel. Macchia-Landschaft mit Ginster und Cistus. Mehr Natur, weniger Küstenblick als Route 1."},
+{num:3,title:"Saleccia Rundweg mit Mortella-Turm",dist:"7 km",dur:"2,5 h",diff:"Mittel",fam:false,desc:"Längere Variante mit Besuch des alten Genueser Wachturms Tour de Mortella. Schöner Rundblick. Für sportlichere Familienmitglieder."},
+],
+dtl:"<p><strong>Plage du Lotu:</strong> Erster Strand nach Bootsankunft – türkisblaues Wasser, Schnorcheln in den Felsen empfohlen.</p><p><strong>Plage de Saleccia:</strong> Silberweißer Sand, türkises Wasser, umgeben von Pinienwäldern – einer der schönsten Strände des Mittelmeers. Filmlocation 'Der längste Tag' (1962).</p>",
+tags:["Wildstrand","Schnorcheln","Picknick"],tagclass:"hike"},
+{t:"boat",tm:"~16:30",n:"Rückfahrt Shuttle-Boot nach St. Florent",d:"Letztes Boot meist 17:00 – Zeiten morgens prüfen!",tags:["Letztes Boot prüfen!"]},
+{t:"swim",tm:"Ganztag",n:"Baden — Agriates & St. Florent",d:"Beste Bademöglichkeiten entlang des Agriates-Ausflugstags und zurück in St. Florent.",
+swims:[
+{name:"Plage du Lotu — Erstes Bad nach Bootsankunft",type:"Meeresbucht",temp:"~25°C",fam:true,desc:"Direkt nach der Bootsankunft: kristallklares türkises Wasser, flacher Einstieg. Ideale erste Abkühlung. Schnorcheln in den Felsblöcken am Rand sehr lohnend – Fische, Seeigel, Oktopusse."},
+{name:"Plage de Saleccia — Traumstrand-Baden",type:"Meeresbucht",temp:"~25°C",fam:true,desc:"Silberweißer Sand, flacher Einstieg, ruhiges Wasser. Einer der schönsten Badestrände des Mittelmeers. Snorcheln entlang der Felsnasen am Rand sehr schön."},
+{name:"Plage de la Roya — Stadtnaher Abendstrand",type:"Meeresbucht",temp:"~25°C",fam:true,desc:"Direkt bei St. Florent, zu Fuß erreichbar. Feiner Sand, ruhiges Wasser, ideal für einen entspannten Abend nach dem Ausflug."},
+],dtl:"<p><strong>Wassertemperatur:</strong> Mittelmeer im September ca. 24–26°C – optimal zum Schwimmen und Schnorcheln.</p><p><strong>Tipp:</strong> Schnorchelausrüstung in St. Florent leihen oder kaufen.</p>",tags:["Schnorcheln","Traumstrand","Warm"]},
+],tips:["Eigenes Essen und Wasser mitnehmen – kaum Versorgung vor Ort","Schnorchel-Set mitnehmen: klares Wasser mit toller Unterwasserwelt","September ideal: weniger Massen, 26°C Wassertemperatur","Shuttle-Boot: Zeiten täglich variieren – morgens am Hafen erfragen"]},
+
+{id:3,region:"nord",title:"Tag 3 (1.9.) — Cap Corse · Nonza · Centuri · Patrimonio",sub:"Genueser Türme · Schwarzer Strand · Hummer-Hafen · Weinprobe",nacht:"St. Florent (Nacht 3 von 3)",
+drives:[{from:"St. Florent",to:"Erbalunga",km:"30 km",dur:"40 Min",via:"D81 / D80 Ostküste",note:"Panoramastraße entlang der Küste"},{from:"Erbalunga",to:"Nonza",km:"22 km",dur:"30 Min",via:"D80 Nordküste"},{from:"Nonza",to:"Centuri (über Nordspitze)",km:"40 km",dur:"50 Min",via:"D80 Westküste Cap Corse",note:"Spektakuläre Küstenstraße – eng!"},{from:"Centuri",to:"Patrimonio",km:"38 km",dur:"45 Min",via:"D80 Südrichtung"},{from:"Patrimonio",to:"St. Florent",km:"8 km",dur:"10 Min",via:"D81"}],
+stops:[
+{t:"attraction",tm:"09:30 · 45 Min",n:"Erbalunga",d:"Malerisches Fischerdorf mit ikonischem Genueser Turm auf Felsen im Meer.",
+dtl:"<p><strong>Turm:</strong> Mittelalterlicher Genueser Wachturm direkt im Meer – perfektes Fotomotiv.</p><p><strong>Hafen:</strong> Kleiner authentischer Fischerhafen mit Café.</p>",
+tags:["Fotospot","Genueser Turm"]},
+{t:"attraction",tm:"10:30 · 1 h",n:"Nonza — Schwarzer Strand & Turm",d:"Spektakuläres Dorf auf schwarzen Klippen – einziger schwarzer Strand Korsikas.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Nonza-corsica.jpg/800px-Nonza-corsica.jpg",alt:"Nonza Korsika schwarzer Strand",credit:"© Wikimedia Commons"},
+dtl:"<p><strong>Turm Paoli:</strong> Legende um die Verteidigung gegen Frankreich (1768).</p><p><strong>Schwarzer Strand:</strong> Ungewöhnlicher Schiefer-Sand, starker Kontrast zum türkisfarbenen Meer.</p>",
+tags:["Schwarzer Strand","Genueser Turm","Legende"]},
+{t:"attraction",tm:"12:00 · 45 Min",n:"Barcaggio — Nordspitze Korsikas",d:"Kleinstes Fischerdorf direkt an der Nordspitze. Naturschutzgebiet Étang de Capandula mit Flamingos.",
+dtl:"<p><strong>Capandula:</strong> Lagune mit Flamingos und Wasservögeln.</p><p><strong>Barcaggio:</strong> Winziger Ort, schöner Strand und Leuchtturm.</p>",
+tags:["Nordspitze","Flamingos"]},
+{t:"attraction",tm:"13:00 · 1 h",n:"Centuri — Hummer-Hafen & Mittagessen",d:"Berühmtester Hummerhafen Korsikas – Mittagessen mit frischem Hummer oder Bourride!",
+dtl:"<p><strong>Hummer:</strong> Centuri deckt ~70% der französischen Hummer-Produktion. Frischer geht's nicht!</p><p><strong>Restaurants:</strong> Le Vieux Moulin oder Le Pêcheur – reservieren empfohlen.</p>",
+tags:["Hummer-Hafen","Mittagessen","Reservieren!"]},
+{t:"attraction",tm:"14:45 · 1 h",n:"Patrimonio — Weinprobe",d:"Bekannteste Weinregion Korsikas: Nielluccio, Vermentino, Muscat.",
+dtl:"<p><strong>Weingüter:</strong> Domaine Gentile, Domaine Leccia, Clos Montemagni.</p><p><strong>Weine:</strong> Rote Nielluccio und weißer Vermentino – typisch korsisch.</p>",
+tags:["Weinprobe","Nielluccio","Mitbringsel"]},
+],tips:["Cap Corse D80: sehr enge Strecken – besonders auf der Westseite langsam fahren","Centuri: Tischreservierung für Mittagessen empfohlen","Patrimonio-Muscat: süßer Dessertwein – tolle Mitbringsel-Flasche"]},
+
+{id:4,region:"zentrum",title:"Tag 4 (2.9.) — Fahrt nach Corte · Zitadelle · Gorges du Tavignano",sub:"Heimliche Hauptstadt Korsikas · Festung auf dem Felsen · Musée de la Corse",nacht:"Corte (Nacht 1 von 3)",
+drives:[{from:"St. Florent",to:"Corte",km:"85 km",dur:"1 h 30 Min",via:"N197 / N200 über Col de San Stefano",note:"Kurvenreiche Bergstraße ins Inselinnere – spektakuläre Landschaft"}],
+stops:[
+{t:"attraction",tm:"10:35 · 2 h",n:"Zitadelle Corte & Musée de la Corse",d:"Eindrucksvolle Burganlage (ab 1419) hoch über der Stadt – einzige Festung im Inselinneren.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Corte_citadelle_et_ville.jpg/800px-Corte_citadelle_et_ville.jpg",alt:"Zitadelle Corte Korsika",credit:"© Wikimedia Commons"},
+dtl:"<p><strong>Zitadelle:</strong> Pasquale Paoli regierte hier 1755–1769 die unabhängige Korsische Republik.</p><p><strong>Musée de la Corse:</strong> Volkskunst, Geschichte, Ethnografie. Ca. 1,5 h. Eintritt ~6 €.</p><p><strong>Belvédère:</strong> Panoramablick auf das Restonica- und Tavignano-Tal.</p>",
+tags:["Zitadelle","Museum ~6 €","Panoramablick"]},
+{t:"attraction",tm:"12:45 · 1 h",n:"Corso Paoli & Mittagessen",d:"Hauptachse mit Cafés, lokalen Spezialitäten und Studenten-Flair.",
+dtl:"<p><strong>Mittagessen:</strong> A Scudella oder U Muscatelli – lokale korsische Küche.</p><p><strong>Einkaufen:</strong> Charcuterie, Brocciu-Käse, Figatellu, Myrtenlikör.</p>",
+tags:["Mittagessen","Lokale Spezialitäten"]},
+{t:"hike",tm:"14:00 · 2 h",n:"Gorges du Tavignano — Nachmittagswanderung",d:"Wildromantische Schlucht direkt ab Stadtrand mit Badegumpen.",
+hikes:[
+{num:1,title:"Talbo-Weg (kurze Version)",dist:"4 km",dur:"1 h 30 Min",diff:"Leicht",fam:true,desc:"Start Pont du Rivière, direkt am Stadtrand. Flach entlang des smaragdgrünen Flusses mit 2–3 Badestellen. Ideal zum Einstieg nach langer Fahrt. Umkehren nach Belieben."},
+{num:2,title:"Tavignano Schlucht bis Bergerie",dist:"8 km",dur:"3 h",diff:"Mittel",fam:true,desc:"Weiterer Aufstieg ins engere Schluchtbett – beeindruckende Felsformationen. Klare Badegumpen auf dem Weg. Markiert (gelb)."},
+{num:3,title:"Arche de Corte Aussichtswanderung",dist:"5 km",dur:"2 h",diff:"Mittel",fam:true,desc:"Aufstieg zur spektakulären Felsbrücke Arche de Corte mit Panoramablick auf das gesamte Tal Richtung Restonica. Steil am Anfang, lohnt sich sehr."},
+],
+dtl:"<p><strong>Start:</strong> Pont du Rivière am Stadtrand (5 Min zu Fuß vom Zentrum).</p><p><strong>Baden:</strong> Klare Badegumpen im Fluss – herrliche Abkühlung!</p>",
+tags:["Wanderung","Baden im Fluss","Ab Stadtrand"],tagclass:"hike"},
+{t:"hotel",tm:"17:00",n:"Übernachtung: Alivi Di A Restonica ★★",d:"Campingplatz direkt am Restonica-Fluss mit Holzchalet-Unterkunft. 3 Nächte (T4–T6).",
+hotel:{name:"Alivi Di A Restonica",stars:2,price:"€422,45",addr:"3 Faubourg Saint-Antoine, 20250 Corte, Korsika",tel:"+33 4 20 04 09 93",desc:"Idyllischer Campingplatz unter jahrhundertealten Olivenbäumen direkt am Restonica-Fluss. Holzchalet-Unterkünfte mit modernem Komfort und Bergblick. 10 Minuten zu Fuß zur Zitadelle und Cours Paoli. Direkter Zugang zu den Badegumpen des Restonica.",anfahrt:"Ab Saint-Florent: N197 → N200 über Col de San Stefano nach Corte (~85 km, 1,5 h). Im Ort: Cours Paoli stadtauswärts, dann Richtung 'Vallée de la Restonica'. Camping liegt kurz nach dem Stadtrand rechts, gut beschildert. Alternativ: GPS 'Faubourg Saint-Antoine, Corte'.",checkin:"14:00",checkout:"10:00",parking:"Kostenlos auf dem Campinggelände",links:[{url:"https://www.alividiarestonica.com/de",label:"alividiarestonica.com"},{url:"https://www.booking.com/hotel/fr/alivi-di-a-restonica.html",label:"Booking.com"}]},
+tags:["Übernachtung","3 Nächte T4–T6","Direkt am Fluss","Holzchalet"]},
+{t:"swim",tm:"Ganztag möglich",n:"Baden — Gorges du Tavignano",d:"Schönste Gumpen direkt ab Stadtrand Corte.",
+swims:[
+{name:"Tavignano Eingangsgumpen",type:"Fluss",temp:"~18°C",fam:true,desc:"Direkt am Beginn des Wanderwegs ab Pont du Rivière – erste Badestellen nach ca. 20 Minuten Fußweg. Breite, flache Gumpen im smaragdgrünen Wasser. Ideal für Kinder."},
+{name:"Brücke Russulinu — Tiefe Gumpen",type:"Fluss",temp:"~16°C",fam:true,desc:"Nach ca. 2 h Wanderung: Genuesische Brücke mit tiefen Badebecken darunter. Sprungfelsen. Ruhige, schattige Stelle – perfekt für ein Picknick-Bad mitten in der Schlucht."},
+{name:"Restonica-Tal unterwegs (ab Hotel)",type:"Fluss",temp:"~14–16°C",fam:true,desc:"Wer im Hotel Dominique Colonna oder ähnlich nächtigt: Gumpen direkt neben der D623 auf dem Weg ins Restonica-Tal. Kurze Stopps zum Baden ohne Wanderung. Kaltes Gletscherwasser!"},
+],dtl:"<p><strong>Wassertemperatur Tavignano:</strong> ~15–18°C im September – erfrischend kalt aber machbar.</p><p><strong>Tipp:</strong> Badeschuhe einpacken – Granitfelsen können rutschig sein.</p>",tags:["Fluss","Gumpen","Sprungfelsen"]},
+],tips:["Zitadelle: Nachmittag besser als Mittag – weniger Hitze und Touristen","Corte liegt auf 400 m – nachts merklich kühler als Küste","Parkplatz Avenue du 9 Septembre, dann zu Fuß"]},
+
+{id:5,region:"zentrum",title:"Tag 5 (3.9.) — Gorges de la Restonica · Lac de Melo · Lac de Capitello",sub:"Gletscherseen auf 1711m und 1930m · Wanderung auf GR20-Variante · Badegumpen",nacht:"Corte (Nacht 2 von 3)",
+drives:[{from:"Corte",to:"Bergerie de Grotelle (Parkplatz)",km:"16 km",dur:"30 Min",via:"D623 durch das Restonica-Tal",note:"Hochsaison: Straße ab ~10:30 gesperrt → Shuttlebus ca. 5 € p.P. — FRÜH STARTEN!"}],
+stops:[
+{t:"attraction",tm:"08:00 · 30 Min",n:"Gorges de la Restonica — Badegumpen am Weg",d:"Smaragdgrüner Gebirgsfluss mit natürlichen Becken zum Baden bereits auf der Fahrt.",
+dtl:"<p><strong>Gumpen:</strong> Mehrere klare Badebecken direkt an der D623 – kurze Stopps auf der Fahrt hinauf.</p><p><strong>Granit:</strong> Eindrucksvolle Granitfelsen begleiten den Weg ins Tal.</p>",
+tags:["Baden","Smaragdgrün","Familien"]},
+{t:"hike",tm:"08:30 · Hauptwanderung",n:"Wanderungen Restonica-Tal",d:"Aufstieg zum Lac de Melo und optional weiter zum Lac de Capitello.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Korsika_Corte_Restonica_Tal_2.jpg/800px-Korsika_Corte_Restonica_Tal_2.jpg",alt:"Restonica-Tal Korsika",credit:"© Wikimedia Commons"},
+hikes:[
+{num:1,title:"Lac de Melo (Pflicht-Tour für alle)",dist:"4 km",dur:"2 h (H&R)",diff:"Mittel",fam:true,desc:"Ab Bergerie de Grotelle (1370 m). Markiert gelb-rot. Steiler Aufstieg über Granitplatten, letzte 200 m mit Metallgriffen gesichert. Lac de Melo auf 1711 m – türkisfarbener Gletschersee inmitten von Granitdomen. Absolutes Muss! Wassertemperatur ca. 10–12°C."},
+{num:2,title:"Lac de Capitello (anspruchsvolle Erweiterung)",dist:"6 km",dur:"3,5 h (H&R)",diff:"Schwer",fam:false,desc:"Weiter ab Lac de Melo, +45 Min aufwärts. Schwindelfreiheit erforderlich – ausgesetzte Stellen. Lac de Capitello auf 1930 m – tiefblauer Gletschersee, beeindruckender Blick auf die Granitnadeln. Nur für trittsichere und ausdauernde Wanderer."},
+{num:3,title:"Leichte Variante: Flussspaziergang",dist:"3 km",dur:"1 h",diff:"Leicht",fam:true,desc:"Für Familienmitglieder, die nicht den vollen Aufstieg machen wollen: Spaziergang im unteren Talbereich entlang des Flusses mit Badestellen. Kein Aufstieg, schöne Natur."},
+],
+dtl:"<p><strong>Ausrüstung:</strong> Festes Schuhwerk Pflicht – keine Sandalen oder Sneaker für den Aufstieg!</p><p><strong>Verpflegung:</strong> 1,5–2 L Wasser und Picknick mitnehmen – oben keine Versorgung.</p>",
+tags:["Gletschersee","GR20-Variante","Granit"],tagclass:"hike"},
+{t:"attraction",tm:"Nachmittag",n:"Abstieg & Baden in den Gumpen",d:"Genüsslicher Abstieg mit Picknick und Baden in den klaren Bergbecken des Restonica-Flusses.",
+dtl:"<p><strong>Badestellen:</strong> Zahlreiche klare Becken auf dem Rückweg – herrliche Abkühlung.</p>",
+tags:["Baden","Picknick","Entspannung"]},
+{t:"swim",tm:"Abstieg & Nachmittag",n:"Baden — Restonica-Tal",d:"Beste Badespots auf dem Weg zurück vom Lac de Melo.",
+swims:[
+{name:"Bergerie de Grotelle — Gumpen direkt am Parkplatz",type:"Gebirgsbach",temp:"~12°C",fam:true,desc:"Direkt am Ausgangspunkt (1370 m): Mehrere Felsenbecken am Restonica-Fluss. Wasser kommt direkt vom Gletscher – sehr kalt, aber ein unvergessliches Erlebnis! Einstieg flach, Becken gut zugänglich."},
+{name:"Mittleres Restonica-Tal — Smaragdgrüne Becken",type:"Gebirgsbach",temp:"~14°C",fam:true,desc:"Ca. 1–2 km unterhalb der Bergerie: Mehrere große, tiefe Gumpen mit smaragdgrünem Wasser und Granitfelsen zum Sonnen. Die klassischen Fotospot-Gumpen des Restonica-Tals. Mutige können springen."},
+{name:"Unteres Restonica-Tal — Straßennahe Familien-Gumpen",type:"Gebirgsbach",temp:"~16°C",fam:true,desc:"Direkt an der D623, mit dem Auto erreichbar. Mehrere breite, flachere Becken auf dem Weg zurück nach Corte. Wärmer als oben, ideal für die ganze Familie ohne langen Fußweg. Sehr beliebt!"},
+{name:"Manganello-Confluence — Geheimtipp",type:"Fluss",temp:"~15°C",fam:true,desc:"Wo Manganello und Restonica sich vereinen, kurz vor Corte: große ruhige Becken, kaum bekannt, sehr schön. Etwas Suchen erforderlich – beim Campingplatz abbiegen."},
+],dtl:"<p><strong>Wichtig:</strong> Baden im Lac de Melo und Lac de Capitello ist verboten – nur im Fluss darunter!</p><p><strong>Wassertemperatur:</strong> 10–16°C je nach Höhe – mutig sein lohnt sich!</p>",tags:["Gletscherwasser","Smaragdgrün","Sprungfelsen"]},
+],tips:["Parkplatz Bergerie de Grotelle kostet ca. 5–8 € – bar mitbringen","Früh starten: vor 9 Uhr für freie Wahl des Parkplatzes","Lac de Capitello: nur wenn alle fit und schwindelfrei sind – kein Druck!","September: weniger Wanderer als August, angenehmere Temperaturen"]},
+
+{id:6,region:"zentrum",title:"Tag 6 (4.9.) — Niolo-Hochebene · Lac de Nino · Gorges de l'Inzecca",sub:"Pozzinen-Hochplateau mit Wildpferden · Mystischer Bergsee · Canyoning-Option",nacht:"Corte (Nacht 3 von 3)",
+drives:[{from:"Corte",to:"Parking Poppaghia (Nino-Ausgangspunkt)",km:"50 km",dur:"1 h",via:"N200 / D84 über Col de Vergio (1477 m)",note:"Höchster Straßenpass Korsikas – atemberaubende Aussicht"},{from:"Parking Poppaghia",to:"Corte (Rückfahrt)",km:"50 km",dur:"1 h",via:"Gleiche Strecke zurück"}],
+stops:[
+{t:"hike",tm:"Hauptaktivität",n:"Wanderungen Niolo / Lac de Nino",d:"Hochplateau mit einzigartigen Pozzinen und Wildpferden – oder alternativ Canyoning.",
+hikes:[
+{num:1,title:"Lac de Nino via GR20 (Familien-Highlight)",dist:"9 km",dur:"3,5 h (H&R)",diff:"Mittel",fam:true,desc:"Ab Parking Poppaghia (1420 m). Start auf GR20-Etappe: zuerst durch Bergkiefernwald, dann offenes Hochplateau. Lac de Nino auf 1743 m: mystischer Bergsee umgeben von den berühmten Pozzinen (flache Moorwiesen mit klaren Rinnsalen). Wildpferde weiden frei am See – die Tochter wird begeistert sein!"},
+{num:2,title:"Pozzinen-Rundweg (kürzere Variante)",dist:"6 km",dur:"2,5 h",diff:"Leicht-Mittel",fam:true,desc:"Kürzerer Aufstieg ohne den kompletten See-Umrundungsweg – trotzdem alle Pozzinen zu Fuß. Besonders schön: die moorähnlichen Wiesenmatten mit kleinen Wasserläufen."},
+{num:3,title:"Canyoning Verghellu-Schlucht (Alternative)",dist:"—",dur:"Halbtagestour",diff:"Mittel",fam:false,desc:"Geführte Canyoning-Tour ab Corte. Anbieter: Corte Aventures, Altore Aventures. Ca. 60–80 € p.P. Abseilstellen, Sprünge, Rutschen ins Wasser. Für die Tochter (13) ein unvergessliches Erlebnis!"},
+],
+dtl:"<p><strong>Col de Vergio:</strong> Auf 1477 m – kurzer Stopp für den Panoramablick lohnt sich.</p><p><strong>Wildpferde:</strong> Freilaufende Niolo-Pferde rund um den See – Abstand halten, aber tolle Fotos möglich.</p><p><strong>Kastanienwald:</strong> Auf dem Rückweg durch imposante alte Kastanienwälder.</p>",
+tags:["Pozzinen","Wildpferde","GR20"],tagclass:"hike"},
+{t:"attraction",tm:"Rückfahrt",n:"Gorges de l'Inzecca — Schlucht-Panorama",d:"20 km südlich von Corte: enge Schlucht mit senkrechten Felswänden – von der Straße aus eindrucksvoll.",
+dtl:"<p><strong>Lage:</strong> Route Nationale 198, südlich von Corte. Kein Aussteigen nötig – schon aus dem Auto beeindruckend.</p><p><strong>Fluss Travo:</strong> Smaragdgrünes Wasser am Boden – Badestellen erreichbar wenn Zeit.</p>",
+tags:["Felswände","Schlucht","Keine Wanderung nötig"]},
+{t:"swim",tm:"Unterwegs & Nachmittag",n:"Baden — Golo · Cascade des Anglais · Vecchio · Travo",d:"Beste Flussbadestellen auf der Strecke Niolo–Corte.",
+swims:[
+{name:"Golo bei Calacuccia",type:"Gebirgsfluss",temp:"~15°C",fam:true,desc:"Der Golo fließt durch das Niolo-Hochplateau an Calacuccia vorbei. Mehrere natürliche Becken direkt an der D84. Ruhiges, klares Wasser – gut als Badestopp auf dem Weg zum oder vom Lac de Nino."},
+{name:"Cascade des Anglais bei Vizzavona",type:"Wasserfall",temp:"~13°C",fam:true,desc:"Kleiner Umweg (20 Min): Ab Bahnhof Vizzavona 3 km dem GR20 folgen. Mehrere kleine Wasserfälle stürzen in tiefe Becken – einer der schönsten Badeplätze Nordkorsikas! Buchenwald gibt Schatten. Mit 13-Jährigen sehr beliebt!"},
+{name:"Vecchio-Fluss bei Ponte Vecchio",type:"Fluss + Rutschen",temp:"~16°C",fam:true,desc:"200 m vor der alten Steinbrücke am Vecchio gibt es eine tiefe Badegumpe mit zwei natürlichen Felsrutschen. Kaum bekannt, toller Spot! Direkt an der N193 – kurzer Stopp auf der Rückfahrt nach Corte."},
+{name:"Travo-Fluss (Gorges de l'Inzecca)",type:"Fluss",temp:"~17°C",fam:true,desc:"Smaragdgrüner Fluss am Boden der Inzecca-Schlucht. Große, tiefe Becken zum Schwimmen und Springen. Von der N198 gut erreichbar. Etwas ruhiger und wärmer als Hochgebirgsflüsse."},
+],dtl:"<p><strong>Cascade des Anglais:</strong> Sehr empfehlenswert als Kurzumweg auf der Rückfahrt.</p>",tags:["Wasserfall","Rutschen","Fluss","Kalt-Erfrischend"]},
+],tips:["Canyoning Verghellu vorab buchen – Plätze begrenzt","Col de Vergio: Kastanienwald auf Rückseite sehr schön – kurzer Spaziergang bei Gelegenheit","Niolo: sehr wenig Touristen – korsische Bergwelt pur","Abend Corte: letzter Abend – Charcuterie-Platte bestellen"]},
+
+{id:7,region:"west",title:"Tag 7 (5.9.) — Fahrt Ajaccio · Napoleon · Sanguinaires",sub:"Geburtsstadt Napoleons · Stadtbummel · Bootsausflug Sonnenuntergang",nacht:"Ajaccio (Nacht 1 von 2)",
+drives:[{from:"Corte",to:"Ajaccio",km:"80 km",dur:"1 h 15 Min",via:"N193 über Vivario und Vizzavona",note:"Malerische Bergstraße durch den Wald von Vizzavona – kurzer Stopp im Wald empfohlen"}],
+stops:[
+{t:"attraction",tm:"10:30 · 1 h",n:"Maison Bonaparte",d:"Geburtshaus und Nationalmuseum Napoleons – vier Stockwerke Familiengeschichte.",
+dtl:"<p><strong>Eintritt:</strong> ~7 €. Täglich 10:30–12:30 und 13:15–17:15.</p><p><strong>Exponate:</strong> Originaleinrichtung, Familienporträts, Gegenstände aus der Epoche.</p>",
+tags:["Napoleon","Museum ~7 €"]},
+{t:"attraction",tm:"11:40 · 1,5 h",n:"Place Foch · Kathedrale · Hafenpromenade",d:"Napoleon-Statue, Taufkathedrale, Markt mit korsischen Spezialitäten.",
+dtl:"<p><strong>Place Foch:</strong> Monumentale Napoleon-Statue, Café-Terasse.</p><p><strong>Kathedrale:</strong> Hier wurde Napoleon 1771 getauft. Barock-Architektur.</p><p><strong>Marché Couvert:</strong> Käse, Wurst, Honig kaufen.</p>",
+tags:["Markt","Kathedrale","Stadtbummel"]},
+{t:"boat",tm:"17:30 · 2 h",n:"Bootstour Sanguinaires-Inseln",d:"Kleiner Archipel vor Ajaccio – Sonnenuntergang, Delfine, Leuchtturm.",
+dtl:"<p><strong>Anbieter:</strong> Nave Va oder Corsica Croisières ab Hafen. Abendtour mit Aperitif an Bord.</p><p><strong>Delfine:</strong> Häufig sichtbar – besonders abends.</p><p><strong>Preis:</strong> ~20–30 € p.P.</p>",
+tags:["Sonnenuntergang","Delfine","~20–30 €"]},
+{t:"hotel",tm:"ab 20:30",n:"Übernachtung: Hôtel Le Week end ★★★★",d:"Direkt am Meer, Route des Sanguinaires. 2 Nächte (T7–T8). Zurückfahren oder 10 Min Taxi vom Hafen.",
+hotel:{name:"Hôtel Le Week end",stars:4,price:"€1.398,50",addr:"45 Route des Sanguinaires, 20000 Ajaccio, Korsika",tel:"+33 4 95 52 51 78",desc:"12 exklusive Suiten direkt am Wasser. Infinity-Pool mit Panoramablick auf die Sanguinaires-Inseln, beheizbarer Swim-Spa, Restaurant mit Meeresfrüchte-Spezialitäten. Nur 200 m vom Strand Terre Sacrée. Sanguinaires-Inseln 3 km entfernt.",anfahrt:"Ab Corte: N193 → Ajaccio, dann Ausschilderung 'Sanguinaires' / D111 ca. 5 km westlich aus der Stadt. Hotel Nr. 45 auf rechter Seite direkt am Wasser. Vom Hafen Ajaccio: ca. 10 Min Taxi oder eigenes Auto.",checkin:"15:00",checkout:"11:00",parking:"Kostenloser Parkplatz beim Hotel",links:[{url:"https://www.hotel-le-weekend.com",label:"hotel-le-weekend.com"},{url:"https://www.booking.com/hotel/fr/le-week-end-ajaccio.html",label:"Booking.com"}]},
+tags:["Übernachtung","2 Nächte T7–T8","Meerblick","Infinity Pool"]},
+],tips:["Ajaccio September: angenehm warm, weniger Massen","Sanguinaires-Tour: Abendstimmung ist magisch – unbedingt einplanen!","Abendessen: frischer Thunfisch und Langusten direkt am Hafen",
+"⚠️ DRINGEND: Basgi Basgi — Zahlung laut Booking.com noch ausstehend! Bitte sofort bezahlen (€1.120,63)."]},
+
+{id:8,region:"west",title:"Tag 8 (6.9.) — Calanques de Piana · Porto · Gorges de Spelunca",sub:"UNESCO-Welterbe · Rote Granitfelsen · Genueser Turm · Schlucht bei Evisa · Wanderungen",nacht:"Ajaccio (Nacht 2 von 2)",
+drives:[{from:"Ajaccio",to:"Piana / Calanques",km:"80 km",dur:"1 h 30 Min",via:"D81 Küstenstraße über Cargèse",note:"Eine der schönsten Küstenstraßen Korsikas"},{from:"Piana",to:"Porto",km:"12 km",dur:"15 Min",via:"D81"},{from:"Porto",to:"Evisa (Spelunca)",km:"20 km",dur:"25 Min",via:"D84 Bergstraße"},{from:"Evisa",to:"Ajaccio (Rückfahrt)",km:"80 km",dur:"1 h 20 Min",via:"D84 / D81 Küstenstraße"}],
+stops:[
+{t:"hike",tm:"09:30 · Calanques",n:"Wanderungen Calanques de Piana",d:"Atemberaubende rote Granitfelsen – UNESCO Weltnaturerbe. Wandern durch bizarre Felsformationen.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Calanques_de_Piana%2C_Corsica_%288132779554%29.jpg/800px-Calanques_de_Piana%2C_Corsica_%288132779554%29.jpg",alt:"Calanques de Piana Korsika",credit:"© Wikimedia Commons / CC BY 2.0"},
+hikes:[
+{num:1,title:"Château Fort Rundweg (Highlight)",dist:"3 km",dur:"1 h 30 Min",diff:"Leicht-Mittel",fam:true,desc:"Start an der D81. Weg durch bizarre rote Granitfelsen, natürliche Bögen, Aussichtsplattformen. Schönste Wanderung der Calanques – unbedingt machen! Morgens, wenn das rote Licht der Felsen am intensivsten ist."},
+{num:2,title:"Capu Rossu Halbinsel-Tour",dist:"10 km",dur:"3,5 h",diff:"Mittel",fam:false,desc:"Längere Tour auf die Halbinsel Capu Rossu mit dem Genueser Turm Torre di Turghiu. Atemberaubendes Panorama auf den Golf von Porto und die Calanques. Für ausdauernde Wanderer."},
+{num:3,title:"Küstenblick-Spaziergang",dist:"1 km",dur:"20 Min",diff:"Leicht",fam:true,desc:"Für alle, die nicht wandern wollen: Kurzer Aussichtspunkt direkt an der D81 mit grandiosem Blick auf die roten Felsen – schon vom Auto aus eindrucksvoll, kurzer Spaziergang auf der Straße."},
+],
+dtl:"<p><strong>Licht:</strong> Morgens leuchten die roten Felsen am intensivsten.</p><p><strong>UNESCO:</strong> Seit 1983 Weltnaturerbe zusammen mit Naturreservat Scandola.</p>",
+tags:["UNESCO","Rote Felsen","Wanderung"],tagclass:"hike"},
+{t:"attraction",tm:"12:00 · 1 h",n:"Porto — Genueser Turm & Mittagessen",d:"Mittelalterlicher Genueser Turm bewacht den malerischen Golf von Porto.",
+dtl:"<p><strong>Turm:</strong> Ikonisch runder Turm (16. Jh.) – Eintritt ~2,50 €.</p><p><strong>Scandola Bootsausflug:</strong> Von hier buchbar, ~50–70 € p.P., 4 h – absolutes Highlight wenn Zeit!</p>",
+tags:["Genueser Turm","Mittagessen","Scandola optional"]},
+{t:"hike",tm:"14:00 · Gorges de Spelunca",n:"Wanderungen Gorges de Spelunca",d:"Spektakuläre Schlucht mit genuesischen Brücken zwischen Ota und Evisa.",
+hikes:[
+{num:1,title:"Ota → Evisa Schluchtweg (klassisch)",dist:"6 km",dur:"2 h 30 Min",diff:"Leicht-Mittel",fam:true,desc:"Schöner Wanderweg durch Kastanienwald, zwei mittelalterliche Genueser-Brücken (Ponte di Zaglia). Fluss mit Badestellen. Ein Auto am Start, eines am Ziel abstellen – oder Rückweg per Taxi/Mitnahme."},
+{num:2,title:"Kurzrunde ab Ota",dist:"3 km",dur:"1 h",diff:"Leicht",fam:true,desc:"Hinunter zur ersten Genueser Brücke und zurück – kürzeste sinnvolle Variante. Schön für Familien mit wenig Zeit oder müden Beinen nach den Calanques."},
+],
+dtl:"<p><strong>Kastanienwald:</strong> Atemberaubende alte Kastanienbäume – besonders schönes Licht am Nachmittag.</p><p><strong>Baden:</strong> Flussbecken am Schluchtboden für Abkühlung.</p>",
+tags:["Kastanienwald","Genueser Brücken","Baden"],tagclass:"hike"},
+{t:"swim",tm:"Nachmittag an Spelunca",n:"Baden — Gorges de Spelunca & Aïtone",d:"Beste Badespots in der Spelunca-Schlucht und dem Wald von Aïtone.",
+swims:[
+{name:"Spelunca-Schlucht — Genuesische Brücke Ponte di Zaglia",type:"Fluss",temp:"~17°C",fam:true,desc:"Am Boden der Spelunca-Schlucht direkt unterhalb der mittelalterlichen Genueser Brücke: tiefe, breite Gumpen im glasklaren Wasser. Wunderbarer schattiger Platz zum Baden und Picknick. Erreichbar über den Wanderweg ab Ota oder Evisa."},
+{name:"Aïtone-Fluss bei Evisa — Piscines Naturelles",type:"Wasserfall",temp:"~14°C",fam:true,desc:"Kurz oberhalb von Evisa, am Waldrand des Forêt d'Aïtone: natürliche Becken am Aïtone-Bach mit kleinen Kaskaden. Larienzio-Kiefernwald gibt Schatten. Mit dem Auto nahezu direkt erreichbar."},
+{name:"Porto Plage — Meer-Alternative",type:"Meeresbucht",temp:"~24°C",fam:true,desc:"Schwarzer Kieselstrand mit türkisem Wasser direkt im Ort Porto. Gut zugänglich, Restaurants nebenan. Wärmer als die Flüsse – für alle, die sich lieber im Meer erfrischen."},
+],dtl:"<p><strong>Tipp:</strong> Spelunca-Brücke und Aïtone lassen sich gut kombinieren – beide sehr lohnend.</p>",tags:["Fluss","Wasserfall","Meer-Alternative"]},
+],tips:["Calanques: FRÜH starten – D81 wird ab 11 Uhr sehr voll","Scandola-Bootsausflug vorab buchen wenn gewünscht – meist ausgebucht","Evisa: kleines Bergdorf mit Kastaniengebäck – Marronenschnaps kaufen!","Rückfahrt Ajaccio: schöner Sonnenuntergang auf der Küstenstraße"]},
+
+{id:9,region:"sued",title:"Tag 9 (7.9.) — Ajaccio → Sartène → Propriano · Reiten · Valinco",sub:"Korsischste Stadt · Golf von Valinco · Strandreiten Filit'Horse · Propriano Hafen",nacht:"Propriano / Hotel Bartaccia",
+drives:[{from:"Ajaccio (Le Week end, Check-out)",to:"Sartène",km:"85 km",dur:"1 h 15 Min",via:"N196 südwärts",note:"Malerische Berglandschaft des korsischen Südens"},{from:"Sartène",to:"Filit'Horse / Filitosa",km:"22 km",dur:"25 Min",via:"D157 Richtung Filitosa"},{from:"Filit'Horse",to:"Propriano / Bartaccia",km:"18 km",dur:"20 Min",via:"D57 → D157 → T40"}],
+stops:[
+{t:"attraction",tm:"09:30 · 1,5 h",n:"Sartène",d:"'Korsischste aller korsischen Städte' (Mérimée) – mittelalterliches Bergstädtchen.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Sartene_corse.jpg/800px-Sartene_corse.jpg",alt:"Sartène Korsika",credit:"© Wikimedia Commons"},
+dtl:"<p><strong>Place de la Libération:</strong> Zentraler Platz mit Rathaus, schöne Café-Terrassen.</p><p><strong>Kirche Sainte-Marie:</strong> Korsische Wachsfiguren und Prozessionsrelikten.</p><p><strong>Musée de la Préhistoire:</strong> Wichtigstes Archäologiemuseum Korsikas mit Menhir-Statuen.</p><p><strong>Enge Gassen:</strong> Authentisches Korsika pur – kaum Touristen.</p>",
+tags:["Authentisch","Menhire","Wenig Touristen"]},
+{t:"attraction",tm:"11:30 · 45 Min",n:"Filitosa — Prähistorische Stätte",d:"Bedeutendste Megalith-Stätte Korsikas – Menhir-Statuen aus 3500 v.Chr. direkt bei Filit'Horse.",
+dtl:"<p><strong>Menhire:</strong> Bewaffnete Wächterfiguren aus Granit, 3.500–1.500 v.Chr. Einzigartiger Fund im Mittelmeerraum.</p><p><strong>Eintritt:</strong> ~8 €. Kombination mit Reiten ideal – beide liegen nebeneinander.</p>",
+tags:["Menhire 3500 v.Chr.","~8 €","UNESCO-Kandidat"]},
+{t:"horse",tm:"13:00 · 2 h",n:"Strandreiten — Filit'Horse bei Filitosa",d:"Familienausritt durch Macchia und zum Strand am Golf von Valinco – mit Badepause zu Pferd!",
+dtl:"<div class='horse-block'><h4>&#127943; Filit'Horse — Pferderitt & Baden bei Propriano</h4><p><strong>Besonderheit:</strong> Reiten kombiniert mit Baden – die Pferde gehen mit ins Wasser! Abkühlung im Golf von Valinco zu Pferd ist ein unvergessliches Erlebnis.</p><p><strong>Route:</strong> Durch leicht hügeliges Gelände, an einer 300 Jahre alten Korkeiche vorbei, dann zum Strand am Valinco-Golf. ~2 h.</p><p><strong>Für Familien:</strong> Eltern führen die Pferde am Strick, Kinder reiten. Auch für 13-Jährige perfekt. Ab 3 Jahren möglich.</p><p><strong>Adresse:</strong> D457 Richtung Calzola, ~200 m nach Abzweig D57/D457 links auf unbefestigte Straße. GPS: bei Filitosa, Olmeto.</p><p><strong>Preis:</strong> ~35–45 € p.P. für 2 h. Vorab buchen!</p><p><strong>Alternative: Ranch Villata (Propriano)</strong> – ebenfalls Strandreiten mit Pferden und Ponys, mehrere Niveaus, zertifiziert 'Cheval Qualité de France', TripAdvisor 'Exzellent'. Liegt direkt bei Propriano.</p></div>",
+tags:["Reiten & Baden","Pferde ins Wasser!","Filitosa","Familie","Vorab buchen!"],tagclass:"horse"},
+{t:"swim",tm:"Nachmittag",n:"Baden — Golf von Valinco",d:"Schöne Strände rund um Propriano nach dem Reiten.",
+swims:[
+{name:"Plage du Lido — Stadtnaher Sandstrand",type:"Meeresbucht",temp:"~25°C",fam:true,desc:"1 km von Propriano-Zentrum, feiner Sand, ruhiges Wasser im Golf. Gut zugänglich, Restaurants nebenan. Ideal für einen entspannten Nachmittagsstrand nach dem Reiten."},
+{name:"Plage de Baracci",type:"Meeresbucht",temp:"~25°C",fam:true,desc:"Ruhige Bucht nördlich von Propriano mit klarem Wasser. Thermalbäder von Baracci in der Nähe – natürliche Heißwasserquellen (~40°C), kostenlos zugänglich am Flussufer."},
+{name:"Plage de Campomoro",type:"Meeresbucht",temp:"~25°C",fam:true,desc:"~15 km südlich von Propriano: einer der wildesten und schönsten Strände des Valinco-Golfs. Genueser Turm am Strand. Sehr naturbelassen, kaum Infrastruktur."},
+],dtl:"<p><strong>Baracci Thermen:</strong> Natürliche heiße Quellen (~40°C) direkt am Fluss Baracci, kostenlos, 3 km nördlich von Propriano – toller Abschluss nach dem Reiten!</p>",tags:["Strand","Thermen","Campomoro"]},
+{t:"hotel",tm:"ab 18:00",n:"Übernachtung: Hotel Bartaccia ★★★★",d:"Nur 18 km von Filitosa – perfekte Lage. Abendessen am Pool oder Hafenpromenade Propriano.",
+hotel:{name:"Hotel Bartaccia",stars:4,price:"€403,21",addr:"12 Quartier Bartaccia, Route de la Corniche, 20110 Propriano, Korsika",tel:"+33 4 95 76 00 29",desc:"Elegantes 4-Sterne-Hotel in 3 ha Gartenpark am Golf von Valinco. 56 Zimmer und Suiten, zwei beheizte Außenpools, Restaurant U Spuntinu, Whirlpool. 200 m vom Strand, 900 m vom Zentrum Propriano. Panoramablick auf den Golf.",anfahrt:"Von Filitosa/Filit'Horse: D57 → T40 → Propriano, dann Route de la Corniche bergwärts. GPS: 12 Quartier Bartaccia. Ca. 18 km / 20 Min. Tipp: Abends etwas unübersichtlich – GPS nutzen!",checkin:"15:00",checkout:"11:00",parking:"Kostenloser Parkplatz auf dem Gelände",links:[{url:"https://bartaccia.fr",label:"bartaccia.fr"},{url:"https://www.booking.com/hotel/fr/bartaccia.html",label:"Booking.com"}]},
+tags:["Übernachtung","1 Nacht","Pool","Golf von Valinco"]},
+],tips:["Filit'Horse vorab buchen: keine Website, per Tel. +33 4 95 74 20 68 oder E-Mail","Filitosa und Filit'Horse liegen nebeneinander – ideal kombinieren","Abendessen: Hafenpromenade Propriano – frischer Fisch mit Blick auf den Golf","Baracci Thermen (~3 km nördlich): kostenlose natürliche Heißwasserquelle – perfekter Abschluss","Bartaccia Pool am Abend: herrlicher Blick auf den beleuchteten Golf von Valinco"]},
+
+{id:10,region:"sued",title:"Tag 10 (8.9.) — Lavezzi-Inseln · Rondinara · Bonifacio · Santateresa",sub:"Naturschutzgebiet · Schnorcheln · Schönste Bucht · Abend in Bonifacio",nacht:"Bonifacio / Hôtel Santateresa",
+drives:[{from:"Propriano / Bartaccia",to:"Bonifacio (Hafen)",km:"68 km",dur:"55 Min",via:"N196 südwärts",note:"Früh starten für Bootsausflug"}],
+stops:[
+{t:"boat",tm:"09:00",n:"Bootsausflug Lavezzi-Inseln",d:"Naturschutzgebiet südlich von Bonifacio – kristallklares Wasser, wilde Granitinseln.",
+dtl:"<p><strong>Buchung:</strong> Ab Hafen Bonifacio. Halbtagestour ab ~35 €, Ganztag ~55–70 €.</p><p><strong>Schnorcheln:</strong> Außergewöhnlich klares Wasser, reiche Unterwasserwelt. Eigenes Set mitbringen!</p>",
+tags:["Bootsausflug","Schnorcheln","~35–70 €","Vorab buchen!"]},
+{t:"attraction",tm:"14:00 · 2 h",n:"Plage de Rondinara",d:"Perfekte hufeisenförmige Bucht – flaches, spiegelglattes türkisfarbenes Wasser.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Top-down_aerial_of_yachts_at_Rondinara_Bay%2C_France_%2852724210800%29.jpg/800px-Top-down_aerial_of_yachts_at_Rondinara_Bay%2C_France_%2852724210800%29.jpg",alt:"Plage de Rondinara Korsika",credit:"© Wikimedia Commons / CC0"},
+dtl:"<p><strong>Form:</strong> Fast vollständig geschlossene Kreisbucht – Wind hat kaum Einfluss.</p><p><strong>Ideal:</strong> Ruhiges Wasser für Schwimmen, Schnorcheln, Kinder.</p>",
+tags:["Traumbucht","Ruhiges Wasser","Schnorcheln"]},
+{t:"hike",tm:"16:30",n:"Cap Pertusato Wanderung",d:"Südspitze Korsikas mit Leuchtturm und atemberaubendem Blick auf Sardinien.",
+hikes:[
+{num:1,title:"Vollständige Klippen-Wanderung",dist:"8 km",dur:"2 h",diff:"Leicht-Mittel",fam:true,desc:"Start ab Bonifacio, Weg entlang der weißen Kalksteinklippen zur echten Südspitze. Sardinien klar sichtbar. Abends besonders schönes goldenes Licht auf den Klippen. Markierter Weg."},
+{num:2,title:"Kurzweg zum Leuchtturm",dist:"2 km",dur:"45 Min",diff:"Leicht",fam:true,desc:"Kürzere Variante mit dem Auto bis nahe an den Leuchtturm – dann kurzer Fußweg. Immer noch toller Blick."},
+],
+dtl:"<p><strong>Abendlicht:</strong> Kurz vor Sonnenuntergang starten – goldenes Licht auf den weißen Klippen ist magisch.</p>",
+tags:["Südspitze","Sardinien-Blick","Klippen"],tagclass:"hike"},
+{t:"swim",tm:"Ganztag",n:"Baden — Rondinara · Lavezzi · Cap Pertusato Buchten",d:"Beste Bade- und Schnorchelspots rund um Bonifacio.",
+swims:[
+{name:"Lavezzi-Inseln — Klarwasser-Schnorcheln",type:"Meer / Naturschutzgebiet",temp:"~25°C",fam:true,desc:"Außergewöhnlich klares Wasser um die Granitinseln – 10–15 m Sichtweite. Reiche Unterwasserwelt: Muränen, Tintenfische, bunte Fische. Schnorchel-Set unbedingt mitbringen! Das Wasser ist hier am klarsten der ganzen Insel."},
+{name:"Plage de Rondinara — Familien-Lagune",type:"Meeresbucht",temp:"~25°C",fam:true,desc:"Hufeisenförmige Bucht mit spiegelglattem Wasser. Flacher Einstieg, kein Wellengang, warmes Wasser – perfekt für Kinder. Eine der besten Schwimmstellen der ganzen Insel für Familien."},
+{name:"Plage de Sperone (Bonifacio)",type:"Meeresbucht",temp:"~24°C",fam:true,desc:"Weißer Sandstrand mit türkisem Wasser 3 km westlich von Bonifacio. Sehr schönes Wasser, ruhiger als Rondinara. Kleiner aber sehr hübsch."},
+{name:"Cala Longa / Cala Paradisu",type:"Meeresbucht",temp:"~24°C",fam:true,desc:"Kleine Buchten nördlich von Bonifacio an der N198 – weniger bekannt, schönes klares Wasser. Mit dem Auto erreichbar, kurzer Fußweg."},
+],dtl:"<p><strong>Snorchel-Tipp:</strong> Lavezzi-Inseln sind die beste Schnorchelstelle ganz Südkorsikas – Ausrüstung in Bonifacio kaufen oder leihen.</p>",tags:["Schnorcheln","Kristallklar","Traumbucht"]},
+{t:"hotel",tm:"ab 19:30",n:"Übernachtung: Hôtel Santateresa ★★★",d:"Auf den Klippen von Bonifacio, direkt an der Altstadt. 1 Nacht (T10).",
+hotel:{name:"Hôtel Santateresa",stars:3,price:"€352,00",addr:"Quartier Saint-François, 20169 Bonifacio, Korsika",tel:"+33 4 95 73 11 59",desc:"Ehemaliges Herrenhaus aus dem 19. Jahrhundert auf den Kalksteinklippen Bonifacios. 42 Zimmer, einige mit Meerblick und Balkon. Atemberaubender Panoramablick auf Klippen, Meer und Sardinien. Direkt an der Altstadt – zu Fuß überall erreichbar. Frühstück auf der Panoramaterrasse.",anfahrt:"In Bonifacio: Ausschilderung 'Haute Ville' / 'Citadelle' folgen, bergauf. Hotel liegt am Ende der Halbinsel im Quartier Saint-François. Kostenloser Parkplatz beim Hotel. GPS: Quartier Saint-François, Bonifacio.",checkin:"14:00",checkout:"11:00",parking:"Kostenloser Hotelparkplatz (inkl. 2 E-Ladesäulen)",links:[{url:"https://www.hotel-santateresa.com/de",label:"hotel-santateresa.com"},{url:"https://www.booking.com/hotel/fr/santateresa.html",label:"Booking.com"}]},
+tags:["Übernachtung","1 Nacht T10","Kliffblick","Sardinien-Sicht"]},
+],tips:["Lavezzi: Morgens früh buchen oder vorab online – sehr beliebt","Schnorchelausrüstung in Bonifacio leihen falls nicht mitgebracht","Rondinara Parkplatz: ca. 5–8 €, dann 500 m zu Fuß","Cap Pertusato Abendwanderung: kurz vor Sonnenuntergang starten","Santateresa: Abendessen in der Altstadt – Hafenrestaurant mit Meeresfrüchten empfohlen"]},
+
+{id:11,region:"sued",title:"Tag 11 (9.9.) — Porto Vecchio · Reiten · Palombaggia · Santa Giulia",sub:"Altstadt · Strand-Reiten für die Familie · Korsikas schönste Strände",nacht:"Porto Vecchio (Nacht 1 von 2)",
+drives:[{from:"Bonifacio",to:"Porto Vecchio",km:"28 km",dur:"30 Min",via:"N198 nordwärts"}],
+stops:[
+{t:"attraction",tm:"09:30 · 1 h",n:"Porto Vecchio Haute Ville",d:"Genuesische Zitadelle auf dem Hügel – lebhafte Altstadt mit Boutiquen und Panoramablick.",
+dtl:"<p><strong>Zitadelle:</strong> Genuesische Festung (16. Jh.) – Stadtkern in den Mauern.</p><p><strong>Place de la République:</strong> Cafés und Terrassenrestaurants mit Aussicht.</p><p><strong>Markt:</strong> Käse, Honig, Charcuterie.</p>",
+tags:["Zitadelle","Altstadt","Panorama"]},
+{t:"horse",tm:"10:30 · 2 h",n:"Strand-Reiten Palombaggia — für die ganze Familie",d:"Geführter Strandritt für Anfänger und Fortgeschrittene entlang Korsikas berühmtestem Strand mit roten Felsen und Pinienwäldern.",
+dtl:"<div class='horse-block'><h4>&#127943; Strandreiten Palombaggia — Tipps für Familien</h4><p><strong>Anbieter:</strong> Ranch U Spigoli (direkt bei Palombaggia), Ranch Équestre de Cala Rossa, L'Étrier Corse bei Lecci. Vorab per Telefon oder E-Mail buchen – begrenzte Plätze!</p><p><strong>Tour Strandritt:</strong> ~2 h auf dem Strand und durch Pinienwälder Richtung Palombaggia-Felsen. Korsische Pferde (teilweise Barb-Kreuzungen) – ruhig und anfängergeeignet.</p><p><strong>Für 13-Jährige:</strong> Ideal! Korsische Reitschulen haben viel Erfahrung mit Kindern und Jugendlichen. Eigenes Tempo möglich.</p><p><strong>Preis:</strong> Ca. 35–50 € p.P. für 1–2 h. Kinder meist etwas günstiger.</p><p><strong>Ausrüstung:</strong> Helm wird gestellt, feste Schuhe mitbringen. Sonnencreme!</p></div>",
+tags:["Reiten","Strandritt","Familie","Anfänger OK","Vorab buchen!"],tagclass:"horse"},
+{t:"attraction",tm:"13:00 · 2,5 h",n:"Plage de Palombaggia",d:"Legendärer Strand – weißer Sand, türkisblaues Wasser, rote Felsen unter Schirmpinien. Regelmäßig unter den schönsten Stränden Europas.",
+dtl:"<p><strong>Wasser:</strong> Ruhig und klar – ideal für Schnorcheln, SUP, Schwimmen.</p><p><strong>Einrichtungen:</strong> Strand-Bars, Liegenverleih ~12–15 €, Restaurants.</p><p><strong>Tipp:</strong> Linker Teil (Richtung Tonnara) weniger überfüllt.</p>",
+tags:["Top-Strand","Schnorcheln","SUP"]},
+{t:"attraction",tm:"16:00 · 2 h",n:"Plage de Santa Giulia",d:"Windgeschützte Lagune – spiegelglattes türkises Wasser, ideal für Familien und Wassersport.",
+dtl:"<p><strong>Lagune:</strong> Fast vollständig geschützte Bucht – Wasser spiegelglatt.</p><p><strong>Wassersport:</strong> Jet-Surf-Kurse (einzigartig auf Korsika), Kitesurfen, Windsurfen buchbar.</p>",
+tags:["Lagune","Ruhig","Wassersport"]},
+{t:"swim",tm:"Ganztag",n:"Baden — Palombaggia · Santa Giulia · Cavu",d:"Die besten Badespots Porto Vecchios – und ein Geheimtipp im Fluss.",
+swims:[
+{name:"Palombaggia — Ikonisches Badewasser",type:"Meeresbucht",temp:"~25°C",fam:true,desc:"Weißer Sand, türkis-blaues Wasser, ruhige kleine Wellen. Klares Wasser für Schnorcheln an den roten Felsnasen am Rand. Einer der schönsten Strände Europas – das Baden ist entsprechend traumhaft."},
+{name:"Santa Giulia — Lagune mit Badewannencharakter",type:"Lagune",temp:"~26°C",fam:true,desc:"Fast vollständig geschlossene Lagune – Wasser spiegelglatt und sehr warm. Flacher Einstieg, maximal 1–1,5 m tief in Ufernähe. Ideal für Kinder und Nicht-Schwimmer. SUP und Kajak buchbar."},
+{name:"Rivière Cavu — Piscines Naturelles (Geheimtipp)",type:"Fluss",temp:"~22–24°C",fam:true,desc:"Sainte-Lucie-de-Porto-Vecchio, 10 km nördlich von Porto Vecchio: Natürliche Becken ('3 Piscines') im Cavu-Fluss, glasklares Wasser, warm durch Sonneneinstrahlung auf Granitfelsen. Familienfreundlich, schöne Stimmung. Shuttlebus in Saison. Einer der schönsten Flussbadeplätze Südkorsikas!"},
+],dtl:"<p><strong>Cavu-Piscines:</strong> Wassertemperatur im September ~22–24°C – warmer als die Bergflüsse, fast wie im Meer. Sehr empfohlen!</p>",tags:["Traumstrand","Lagune","Cavu-Piscines"]},
+{t:"hotel",tm:"ab 18:00",n:"Übernachtung: Casa Santini x Roc Seven ★★★★",d:"Boutique-Hotel mit Privatstrand direkt an der Bucht von Porto Vecchio. 2 Nächte (T11–T12).",
+hotel:{name:"Casa Santini x Roc Seven",stars:4,price:"€883,02",addr:"Avenue Georges Pompidou, 20137 Porto-Vecchio, Korsika",tel:"+33 4 95 70 14 15",desc:"Ikonisches Hotel seit 1963, komplett renoviert 2023. 34 Zimmer mit Blick auf die Bucht, Privatstrand und Privathafen, mediterranes Restaurant Roc Seven. Direkt am Hafen und am Fuß der Altstadt, 5 Min zu Fuß zu Yachthafen und Citadelle. Garten mit Meerblick unter Pinien, Eukalyptus und Palmen. Palombaggia-Strand 15 Min mit dem Auto.",anfahrt:"Ab Bonifacio: N198 nordwärts ~28 km (30 Min). Kurz vor Porto Vecchio dem Hafenschild folgen ('Marine / Port de Plaisance'). Avenue Georges Pompidou in La Marine – Hotel liegt direkt am Wasser. Kostenloser Parkplatz. Vom Hotel Shuttlebus in die Altstadt oben.",checkin:"14:00",checkout:"11:00",parking:"Kostenloser Parkplatz beim Hotel",links:[{url:"https://www.fahrenheitseven.com/de/destinations/roc-seven-casa-santini-hotel-porto-vecchio.html",label:"fahrenheitseven.com"},{url:"https://www.booking.com/hotel/fr/roc-seven.html",label:"Booking.com"}]},
+tags:["Übernachtung","2 Nächte T11–T12","Privatstrand","Hafenblick"]},
+],tips:["Reiten vorab buchen – mindestens 1 Woche im Voraus!","Palombaggia: vor 10 Uhr ankommen für gute Plätze","Beide Strände laufen zu Fuß schwer zu verbinden – Auto nehmen","Porto Vecchio Abends: lebendigste Atmosphäre der Region"]},
+
+{id:12,region:"sued",title:"Tag 12 (10.9.) — Aiguilles de Bavella · Piscia di Ghjaddu · Strand",sub:"Dolomiten Korsikas · Spektakulärer Wasserfall · Letzter Strandnachmittag",nacht:"Porto Vecchio (Nacht 2 von 2)",
+drives:[{from:"Porto Vecchio",to:"Col de Bavella",km:"47 km",dur:"55 Min",via:"D368 über Zonza",note:"Spektakulärer Anblick der Nadeln schon von der Straße aus – früh starten!"},{from:"Col de Bavella",to:"Piscia di Ghjaddu (Parkplatz Ospédale)",km:"30 km",dur:"40 Min",via:"D368 / Ospédale"},{from:"Ospédale",to:"Porto Vecchio",km:"25 km",dur:"30 Min",via:"D368 bergab"}],
+stops:[
+{t:"hike",tm:"09:00 · Bavella",n:"Wanderungen Aiguilles de Bavella",d:"Dramatische Felstürme auf 1218 m – Dolomiten Korsikas. Verschiedene Routen für jedes Niveau.",
+photo:{url:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Bavella-Massiv_Korsika.jpg/800px-Bavella-Massiv_Korsika.jpg",alt:"Aiguilles de Bavella Korsika",credit:"© Wikimedia Commons"},
+hikes:[
+{num:1,title:"Trou de la Bombe (Familien-Highlight)",dist:"3 km",dur:"1 h 15 Min",diff:"Leicht",fam:true,desc:"Rundweg ab Col de Bavella durch Laricio-Pinienwälder zum natürlichen Felsloch 'Trou de la Bombe' – spektakulärer Ausblick auf die Nadeln. Einfach, markiert, auch für die Tochter toll."},
+{num:2,title:"GR20-Variante zwischen den Nadeln",dist:"8 km",dur:"3 h",diff:"Mittel-Schwer",fam:false,desc:"Auf dem GR20 durch das Massiv – zwischen den Granitnadeln hindurch. Trittsicherheit erforderlich, ausgesetzte Stellen. Spektakuläre Aussichten auf das Massiv. Nur für sehr geübte Wanderer."},
+{num:3,title:"Col de Bavella Panoramaspaziergang",dist:"2 km",dur:"45 Min",diff:"Leicht",fam:true,desc:"Kurze Runde rund um den Col – toller Panoramablick auf die Nadeln ohne Anstrengung. Ideal wenn die Energie nach gestern fehlt."},
+],
+dtl:"<p><strong>Col de Bavella (1218 m):</strong> Großes Holzkreuz, Blick auf die Nadeln – schon hier atemberaubend.</p><p><strong>Laricio-Pinienwälder:</strong> Alte, hochgewachsene Kiefern – einzigartiger Wald.</p>",
+tags:["Ikonisch","Trou de la Bombe","Kletterfelsen"],tagclass:"hike"},
+{t:"hike",tm:"Nachmittag · Piscia",n:"Piscia di Ghjaddu Wasserfall",d:"Eindrucksvoller Wasserfall in wildromantischer Landschaft – leichte Wanderung für die ganze Familie.",
+hikes:[
+{num:1,title:"Wasserfall-Rundweg (für alle empfohlen)",dist:"6 km",dur:"2 h",diff:"Leicht-Mittel",fam:true,desc:"Start am Parkplatz Forêt de l'Ospédale. Durch alten Pinienwald zu einem der spektakulärsten Wasserfälle Korsikas, der in eine enge Schlucht stürzt. Markierter Weg, keine Kletterpassagen. Für die ganze Familie geeignet."},
+{num:2,title:"Kurzversion bis zum Wasserfall-Blick",dist:"4 km",dur:"1 h 15 Min",diff:"Leicht",fam:true,desc:"Direkter Weg zum nächsten Aussichtspunkt des Wasserfalls – etwas kürzer. Rückweg auf gleichem Weg."},
+],
+dtl:"<p><strong>Wasserfall:</strong> Stürzt aus enger Schlucht in natürlichen Becken – sehr beeindruckend!</p><p><strong>Wald:</strong> Ospédale-Pinienwald mit alten Bäumen und Granitblöcken.</p>",
+tags:["Wasserfall","Leicht","Wald"],tagclass:"hike"},
+{t:"swim",tm:"Ganztag",n:"Baden — Purcaraccia · Cavu · Solenzara",d:"Die spektakulärsten Flussbadestellen Südkorsikas – direkt auf dem Tages-Rundkurs.",
+swims:[
+{name:"Cascades de Purcaraccia — Legendäre Gumpen und Rutschen",type:"Wasserfall + Gumpen",temp:"~14°C",diff:"Mittel",fam:false,desc:"Auf der Strecke Col de Bavella → Ostküste (D268): 40-minütiger Fußweg ab Bocca di Larone. Natürliche Felsrutschen, türkisfarbene Gumpen, 40 m Wasserfall. Eines der beeindruckendsten Naturerlebnisse Korsikas! Feste Schuhe Pflicht, Sturzgefahr beachten. Für Erwachsene und sportliche Teenager mit Erfahrung. Purcaraccia-Zugang seit 2023 für Gruppen ohne Führer eingeschränkt – aktuell prüfen."},
+{name:"Polischellu-Bach — Familienfreundliche Alternative zu Purcaraccia",type:"Gumpen",temp:"~15°C",fam:true,desc:"300 m östlich vom Purcaraccia-Zustieg: Flacheres Bachbett des Polischellu mit schönen Gumpen ohne die ausgesetzten Stellen. Für Familien mit Kindern die bessere Wahl – genauso schönes Wasser!"},
+{name:"Solenzara-Fluss — Warmste Flussbadestellen Südkorsikas",type:"Fluss",temp:"~20°C",fam:true,desc:"Fluss Solenzara auf der Küstenstraße zwischen Bavella und Porto Vecchio (D268/N198): Mehrere breite, ruhige Becken mit klarem Wasser. Wärmer als Hochgebirgsflüsse, gut zugänglich von der Straße. Familienperfekt für ein letztes Bad vor der Rückfahrt."},
+{name:"Rivière Cavu — Encore une fois!",type:"Fluss",temp:"~22–24°C",fam:true,desc:"Auf dem Rückweg nach Porto Vecchio: nochmals die Cavu Piscines (10 km nördlich Porto Vecchio) – das wärmste und familienfreundlichste Flussbad Südkorsikas. Perfekter Abschluss des letzten vollen Reisetags."},
+],dtl:"<p><strong>Wichtig Purcaraccia:</strong> Nicht bei Nässe oder Regen – Felsen sind dann lebensgefährlich rutschig. Zugangsregeln vor Ort aktuell prüfen.</p>",tags:["Rutschen","Kristallklar","Warm","Spektakulär"]},
+{t:"attraction",tm:"Letzter Strandnachmittag",n:"Abschluss-Bad Palombaggia oder Santa Giulia",d:"Nochmals einer der Traumstrände – letztes Baden vor der Rückreise morgen.",tags:["Letztes Bad","Entspannung"]},
+],tips:["Bavella früh besuchen – Touristenbusse kommen ab 11 Uhr","Piscia di Ghjaddu: festes Schuhwerk und 1 L Wasser einpacken","Abend Porto Vecchio: Abschluss-Dinner in der Haute Ville – Reservierung empfohlen","Gepäck abends schon vorbereiten für frühe Rückfahrt morgen"]},
+
+{id:13,region:"nord",title:"Tag 13 (11.9.) — Rückfahrt Bastia · Rückflug 15:25",sub:"Entspannte Rückfahrt · Bastia Vieux Port · Abflug 15:25 Uhr",nacht:"(Rückflug München 15:25)",
+drives:[{from:"Porto Vecchio",to:"Bastia",km:"145 km",dur:"2 h",via:"N198 Ostküste – flache, schnelle Straße",note:"Etangs (Küstenlagunen) bei Biguglia schön. Puffer für Tankstelle und Mietwagen-Rückgabe einplanen!"}],
+stops:[
+{t:"attraction",tm:"10:30 · 1 h",n:"Bastia — Letzter Stadtbummel & Einkaufen",d:"Abschlusskaffee am Vieux Port und Mitbringsel kaufen.",
+dtl:"<p><strong>Einkaufen:</strong> Charcuterie, Brocciu, Myrtenlikör, Châtaignenlikör, Honig – gute Auswahl am Vieux Port.</p><p><strong>Café:</strong> Terrasse am alten Hafen – perfekter Abschluss.</p>",
+tags:["Mitbringsel","Café","Vieux Port"]},
+{t:"flight",tm:"12:30",n:"Flughafen Bastia BIA — Mietwagen zurück & Einchecken",d:"Mietwagen: vorher tanken! Check-in spätestens 13:15 Uhr.",tags:["Tanken!","Check-in 13:15"]},
+{t:"flight",tm:"15:25",n:"Rückflug München",d:"Gute Reise!",tags:["München"]},
+],tips:["Puffer einplanen: 2 h vor Abflug am Flughafen","Mietwagen: Tanken 2 km vor Flughafen günstiger","Duty Free: Myrtenlikör und korsische Spezialitäten kaufen","Ostküste N198: flach und schnell – bei gutem Wetter Badestopps möglich"]},
+];
+
+/* BUILD UI */
+var SID=0;
+function buildUI(){
+  var tabs=document.getElementById('tabs'),panels=document.getElementById('panels');
+  var rl={nord:"Nord",zentrum:"Zentrum",west:"West",sued:"Süd"};
+  var rc={nord:"rb-nord",zentrum:"rb-zentrum",west:"rb-west",sued:"rb-sued"};
+
+  DAYS.forEach(function(day,i){
+    var tab=document.createElement('button');
+    tab.className='day-tab'+(i===0?' active':'');
+    tab.textContent='Tag '+day.id;
+    tab.onclick=(function(d){return function(){
+      document.querySelectorAll('.day-tab').forEach(function(b){b.classList.remove('active');});
+      document.querySelectorAll('.day-panel').forEach(function(p){p.classList.remove('active');});
+      this.classList.add('active');
+      document.getElementById('panel-'+d).classList.add('active');
+    };})(day.id);
+    tabs.appendChild(tab);
+
+    var panel=document.createElement('div');
+    panel.className='day-panel'+(i===0?' active':'');
+    panel.id='panel-'+day.id;
+
+    var h='<div class="day-title">'+day.title+'<span class="rb '+rc[day.region]+'">'+rl[day.region]+'</span></div>';
+    h+='<div class="day-sub">'+day.sub+'</div>';
+
+    /* summary bar */
+    var totalKm=0,totalDur=[];
+    if(day.drives&&day.drives.length){
+      day.drives.forEach(function(dr){
+        var km=parseInt(dr.km)||0;totalKm+=km;
+        totalDur.push(dr.dur);
+      });
+    }
+    h+='<div class="sum">';
+    if(totalKm>0)h+='<div class="si"><strong>Fahrstrecke gesamt:</strong> ~'+totalKm+' km</div>';
+    h+='<div class="si"><strong>Übernachtung:</strong> '+day.nacht+'</div>';
+    h+='</div>';
+
+    /* drive strips */
+    if(day.drives&&day.drives.length){
+      day.drives.forEach(function(dr){
+        h+='<div class="drive-strip">';
+        h+='<div class="drive-icon">&#128663;</div>';
+        h+='<div class="drive-info">';
+        h+='<div class="drive-name">'+dr.from+' &rarr; '+dr.to+'</div>';
+        if(dr.via)h+='<div class="drive-desc">'+dr.via+(dr.note?' &mdash; '+dr.note:'')+'</div>';
+        h+='</div>';
+        h+='<div class="drive-badges"><span class="dbadge km">'+dr.km+'</span><span class="dbadge dur">'+dr.dur+'</span></div>';
+        h+='</div>';
+      });
+    }
+
+    /* stops */
+    day.stops.forEach(function(stop,si){
+      var isLast=si===day.stops.length-1;
+      var isA=stop.t==='attraction'||stop.t==='boat'||stop.t==='hike'||stop.t==='horse'||stop.t==='swim'||stop.t==='hotel';
+      var sid='s'+(SID++);
+
+      h+='<div class="stop"><div class="sl"><div class="sd '+stop.t+'">';
+      if(stop.t==='attraction')h+='&#9733;';
+      else if(stop.t==='hotel')h+='&#8962;';
+      else if(stop.t==='flight')h+='&#9992;';
+      else if(stop.t==='boat')h+='&#9875;';
+      else if(stop.t==='horse')h+='&#127943;';
+      else if(stop.t==='hike')h+='&#9968;';
+      else if(stop.t==='swim')h+='&#128715;';
+      else h+='&#9658;';
+      h+='</div>'+(isLast?'':'<div class="sc"></div>')+'</div><div class="sv">';
+      h+='<div class="st">'+stop.tm+'</div>';
+
+      if(isA&&(stop.dtl||stop.hikes)){
+        h+='<div class="sn" onclick="toggleDet(\'det-'+sid+'\')">'+stop.n+' <span style="font-size:10px;color:#b4b2a9;font-weight:400">&#9662; Details + Fotos</span></div>';
+      }else{
+        h+='<div class="sn nodtl">'+stop.n+'</div>';
+      }
+      h+='<div class="sdesc">'+stop.d+'</div>';
+      if(stop.tags&&stop.tags.length){
+        h+='<div class="stags">';
+        stop.tags.forEach(function(t){
+          var cls='tag'+(stop.tagclass?' '+stop.tagclass:'');
+          h+='<span class="'+cls+'">'+t+'</span>';
+        });
+        h+='</div>';
+      }
+
+      if(isA){
+        h+='<div class="det" id="det-'+sid+'">';
+
+        /* attraction photo from Wikimedia Commons */
+        if(stop.photo){
+          h+='<img class="att-photo" src="'+stop.photo.url+'" alt="'+stop.photo.alt+'" loading="lazy" onerror="this.style.display=\'none\'">';
+          h+='<div class="att-photo-caption">'+stop.photo.credit+' &middot; CC-Lizenz</div>';
+        }
+
+        /* hotel card */
+        if(stop.hotel){
+          var ht=stop.hotel;
+          h+='<div class="hotel-card">';
+          h+='<div class="hotel-card-head">';
+          h+='<div class="hotel-card-stars">'+('★'.repeat(ht.stars||3))+'</div>';
+          h+='<div class="hotel-card-name">'+ht.name+'</div>';
+          if(ht.price)h+='<div class="hotel-card-price">'+ht.price+' gebucht</div>';
+          h+='</div>';
+          h+='<div class="hotel-card-body">';
+          h+='<div class="hotel-addr"><span class="hotel-addr-icon">&#128205;</span><span>'+ht.addr+'</span></div>';
+          if(ht.tel)h+='<p>&#128222; '+ht.tel+'</p>';
+          if(ht.desc)h+='<p>'+ht.desc+'</p>';
+          h+='<div class="hotel-anfahrt"><strong>&#128663; Anfahrt</strong>'+ht.anfahrt+'</div>';
+          if(ht.checkin)h+='<p style="margin-top:6px"><strong>Check-in:</strong> '+ht.checkin+' &nbsp; <strong>Check-out:</strong> '+(ht.checkout||'11:00')+'</p>';
+          if(ht.parking)h+='<p><strong>Parken:</strong> '+ht.parking+'</p>';
+          if(ht.links&&ht.links.length){h+='<div class="hotel-links">';ht.links.forEach(function(l){h+='<a class="hotel-link" href="'+l.url+'" target="_blank">'+l.label+'</a>';});h+='</div>';}
+          h+='</div></div>';
+        }
+
+        /* swim spots */
+        if(stop.swims&&stop.swims.length){
+          h+='<div class="swim-block"><div class="swim-block-label">&#128715; Badespots — Tippen zum Aufklappen:</div>';
+          stop.swims.forEach(function(sw,swi){
+            var swid='sw-'+sid+'-'+swi;
+            h+='<div class="swim-spot">';
+            h+='<div class="swim-spot-head" onclick="toggleSwim(\''+swid+'\')">';
+            h+='<div class="swim-spot-icon">&#128715;</div>';
+            h+='<div class="swim-spot-title">'+sw.name+'</div>';
+            h+='<div class="swim-spot-meta">';
+            if(sw.type)h+='<span class="swim-badge type">'+sw.type+'</span>';
+            if(sw.temp)h+='<span class="swim-badge temp">'+sw.temp+'</span>';
+            if(sw.fam)h+='<span class="swim-badge fam">Familie &#10003;</span>';
+            if(sw.diff)h+='<span class="swim-badge diff">'+sw.diff+'</span>';
+            h+='</div></div>';
+            h+='<div class="swim-spot-body" id="'+swid+'">'+sw.desc+'</div>';
+            h+='</div>';
+          });
+          h+='</div>';
+        }
+
+        /* hike alternatives */
+        if(stop.hikes&&stop.hikes.length){
+          h+='<div class="hike-alts"><div class="hike-alts-label">&#9968; Wanderalternativen — eine ausw&auml;hlen:</div>';
+          stop.hikes.forEach(function(hk,hi){
+            var hid='hk-'+sid+'-'+hi;
+            h+='<div class="hike-alt">';
+            h+='<div class="hike-alt-head" onclick="toggleHike(\''+hid+'\')">';
+            h+='<div class="hike-alt-num">'+hk.num+'</div>';
+            h+='<div class="hike-alt-title">'+hk.title+'</div>';
+            h+='<div class="hike-alt-meta">';
+            if(hk.dist)h+='<span class="hike-badge dist">'+hk.dist+'</span>';
+            if(hk.dur)h+='<span class="hike-badge dur">'+hk.dur+'</span>';
+            if(hk.diff)h+='<span class="hike-badge diff">'+hk.diff+'</span>';
+            if(hk.fam)h+='<span class="hike-badge fam">Familie &#10003;</span>';
+            h+='</div></div>';
+            h+='<div class="hike-alt-body" id="'+hid+'">'+hk.desc+'</div>';
+            h+='</div>';
+          });
+          h+='</div>';
+        }
+
+        if(stop.dtl)h+=stop.dtl;
+        h+='<div class="phs"><div class="ph-gallery" id="pg-'+sid+'"></div>';
+        h+='<input type="file" accept="image/*" multiple class="phi" id="fi-'+sid+'" onchange="handlePh(\''+sid+'\',this)">';
+        h+='<button class="pub" onclick="trigPh(\''+sid+'\')">&#128247; Fotos hinzuf&uuml;gen</button>';
+        h+='<div class="pc" id="pn-'+sid+'"></div></div>';
+        if(stop.dtl||stop.hikes)h+='<p style="margin-top:5px;font-size:10px;color:#b4b2a9">&#9650; Zuklappen</p>';
+        h+='</div>';
+      }
+      h+='</div></div>';
+    });
+
+    if(day.tips&&day.tips.length){h+='<div class="tips"><h3>Tipps f&uuml;r diesen Tag</h3>'+day.tips.map(function(t){return'<div class="tip">'+t+'</div>';}).join('')+'</div>';}
+    panel.innerHTML=h;
+    panels.appendChild(panel);
+  });
+}
+buildUI();
+</script>
+</body>
+</html>
