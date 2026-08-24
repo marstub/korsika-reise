@@ -1,0 +1,14 @@
+{
+  "name": "Korsika Rundreise 2026",
+  "short_name": "Korsika",
+  "description": "Interaktiver Reiseplan Korsika 30.8.–11.9.2026",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f4f0",
+  "theme_color": "#1a1a18",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
