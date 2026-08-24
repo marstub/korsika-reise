@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foto-Anleitung — Korsika Reiseplan</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a18;padding:1.5rem;line-height:1.6}
+.container{max-width:720px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin-bottom:6px}
+.subtitle{color:#73726c;font-size:14px;margin-bottom:2rem}
+.card{background:#fff;border-radius:12px;border:0.5px solid #d3d1c7;padding:1.25rem 1.5rem;margin-bottom:1.25rem}
+.card h2{font-size:15px;font-weight:600;margin-bottom:0.75rem;display:flex;align-items:center;gap:8px}
+.step{display:flex;gap:12px;margin-bottom:1rem;align-items:flex-start}
+.step-num{width:26px;height:26px;border-radius:50%;background:#1a1a18;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-body{flex:1}
+.step-title{font-size:13px;font-weight:600;color:#1a1a18;margin-bottom:3px}
+.step-desc{font-size:12px;color:#4b5563;line-height:1.6}
+code{background:#eae9e3;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;color:#1a1a18}
+.file-tree{background:#1a1a18;color:#e5e7eb;padding:1rem;border-radius:8px;font-family:monospace;font-size:12px;line-height:2;margin:8px 0}
+.file-tree .folder{color:#fbbf24}
+.file-tree .file{color:#86efac}
+.file-tree .html{color:#60a5fa}
+.file-tree .highlight{background:#374151;display:inline-block;width:100%;padding:0 4px;border-radius:3px}
+.tip{background:#fef9c3;border:0.5px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#78350f;margin-top:8px}
+.tip strong{font-weight:600}
+.warn{background:#fef2f2;border:0.5px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#991b1b;margin-top:8px}
+.names-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.names-table th{background:#eae9e3;padding:6px 10px;text-align:left;font-weight:600;border-bottom:1px solid #d3d1c7}
+.names-table td{padding:6px 10px;border-bottom:0.5px solid #f0efe9;color:#4b5563}
+.names-table td:first-child{font-family:monospace;color:#1a1a18;font-weight:500}
+.names-table tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:10px;padding:1px 7px;border-radius:999px;font-weight:600;margin-left:6px}
+.badge.green{background:#dcfce7;color:#166534}
+.badge.blue{background:#dbeafe;color:#1e40af}
+.separator{height:1px;background:#d3d1c7;margin:1rem 0}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>📸 Eigene Fotos einbauen</h1>
+<p class="subtitle">Schritt-für-Schritt-Anleitung für GitHub — kein technisches Wissen nötig</p>
+
+<!-- GRUNDPRINZIP -->
+<div class="card">
+<h2>💡 Wie es funktioniert</h2>
+<p style="font-size:13px;color:#4b5563;margin-bottom:12px">Der Reiseplan besteht aus zwei Teilen auf GitHub: der <code>index.html</code> und einem <code>fotos/</code>-Ordner. Die HTML-Datei zeigt automatisch das richtige Foto an, wenn die Bilddatei den <strong>exakt richtigen Namen</strong> hat.</p>
+<div class="file-tree">
+<span class="folder">dein-repository/</span><br>
+&nbsp;&nbsp;├── <span class="html">index.html</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Reiseplan (nicht ändern)<br>
+&nbsp;&nbsp;└── <span class="folder">fotos/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">bastia.jpg</span> &nbsp;&nbsp;&nbsp;&nbsp;← Foto für Tag 1 Bastia<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">saleccia.jpg</span> &nbsp;&nbsp;← Foto für Plage de Saleccia<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="file">nonza.jpg</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Foto für Nonza<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="file">... (14 Dateien)</span>
+</div>
+<div class="tip"><strong>Wichtig:</strong> Der Dateiname muss exakt stimmen — Groß-/Kleinschreibung, kein Leerzeichen, nur <code>.jpg</code> (nicht <code>.JPG</code> oder <code>.jpeg</code>). Wenn der Name stimmt, erscheint das Foto automatisch.</div>
+</div>
+
+<!-- DATEINAMEN -->
+<div class="card">
+<h2>📋 Welcher Name für welches Foto?</h2>
+<table class="names-table">
+<tr><th>Dateiname in fotos/</th><th>Erscheint bei dieser Station</th></tr>
+<tr><td>bastia.jpg</td><td>Bastia — Terra Vecchia &amp; Zitadelle (Tag 1)</td></tr>
+<tr><td>saint_florent.jpg</td><td>Saint-Florent — Hafen &amp; Altstadt (Tag 1)</td></tr>
+<tr><td>saleccia.jpg</td><td>Plage de Saleccia — Désert des Agriates (Tag 2)</td></tr>
+<tr><td>erbalunga.jpg</td><td>Erbalunga — Genueser Turm (Tag 3)</td></tr>
+<tr><td>nonza.jpg</td><td>Nonza — Schwarzer Strand (Tag 3)</td></tr>
+<tr><td>centuri.jpg</td><td>Centuri — Hummer-Hafen (Tag 3)</td></tr>
+<tr><td>corte.jpg</td><td>Zitadelle Corte &amp; Musée de la Corse (Tag 4)</td></tr>
+<tr><td>restonica.jpg</td><td>Gorges de la Restonica — Wanderung (Tag 5)</td></tr>
+<tr><td>napoleon.jpg</td><td>Maison Bonaparte — Ajaccio (Tag 7)</td></tr>
+<tr><td>calanques.jpg</td><td>Calanques de Piana — UNESCO (Tag 8)</td></tr>
+<tr><td>sartene.jpg</td><td>Sartène — Korsischste Stadt (Tag 9)</td></tr>
+<tr><td>bonifacio.jpg</td><td>Bonifacio — Zitadelle &amp; Klippen (Tag 10)</td></tr>
+<tr><td>palombaggia.jpg</td><td>Plage de Palombaggia (Tag 11)</td></tr>
+<tr><td>bavella.jpg</td><td>Aiguilles de Bavella (Tag 12)</td></tr>
+</table>
+<div class="tip"><strong>Tipp:</strong> Du musst nicht alle 14 Fotos ersetzen — wenn eine Datei fehlt, wird einfach das vorhandene Platzhalterbild angezeigt.</div>
+</div>
+
+<!-- FOTO VORBEREITEN -->
+<div class="card">
+<h2>🖼️ Schritt 1 — Foto vorbereiten</h2>
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <div class="step-title">Foto umbenennen</div>
+    <div class="step-desc">Benenne dein Foto exakt so um wie in der Tabelle oben — z.B. dein Bonifacio-Foto in <code>bonifacio.jpg</code> umbenennen. Nur Kleinbuchstaben, Unterstrich statt Leerzeichen, Endung <code>.jpg</code>.</div>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    <div class="step-title">Dateigröße prüfen (optional aber empfohlen)</div>
+    <div class="step-desc">Fotos von Smartphones sind oft 5–15 MB groß. Für schnelleres Laden empfehlen wir max. 500 KB bis 1 MB. Kostenlos verkleinern: <strong>squoosh.app</strong> — einfach reinziehen, auf ~800px Breite und JPEG 80% Qualität setzen, herunterladen.</div>
+  </div>
+</div>
+<div class="tip"><strong>Formate:</strong> Am besten <code>.jpg</code>. HEIC (iPhone) funktioniert nicht direkt — bitte vorher in JPG umwandeln (z.B. auf Mac: Doppelklick → Vorschau → Exportieren als JPEG).</div>
+</div>
+
+<!-- GITHUB UPLOAD -->
+<div class="card">
+<h2>⬆️ Schritt 2 — Foto auf GitHub hochladen</h2>
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <div class="step-title">Repository öffnen</div>
+    <div class="step-desc">Gehe zu <strong>github.com</strong> → Dein Repository (z.B. <code>deinname/korsika-reise</code>) → klicke auf den <code>fotos</code>-Ordner.</div>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    <div class="step-title">Datei hochladen</div>
+    <div class="step-desc">Klicke auf <strong>„Add file"</strong> → <strong>„Upload files"</strong>. Ziehe dein umbenanntes Foto (z.B. <code>bonifacio.jpg</code>) per Drag &amp; Drop in das Fenster — oder klicke auf „choose your files".</div>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-body">
+    <div class="step-title">Commit bestätigen</div>
+    <div class="step-desc">Scroll nach unten → Klicke auf <strong>„Commit changes"</strong> (grüner Button). Nach 1–2 Minuten ist das Foto live auf deiner GitHub Pages URL.</div>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-body">
+    <div class="step-title">Prüfen</div>
+    <div class="step-desc">Öffne deinen Reiseplan im Browser → Tag aufklappen → Stop aufklappen → Foto sollte erscheinen. Browser-Cache leeren falls nötig: <code>Strg+Shift+R</code> (Windows) oder <code>Cmd+Shift+R</code> (Mac).</div>
+  </div>
+</div>
+<div class="warn"><strong>Achtung:</strong> Wenn du im <code>fotos/</code>-Ordner bist und dort noch kein Ordner existiert: Klicke auf <strong>„Add file" → „Create new file"</strong>, tippe als Namen <code>fotos/platzhalter.txt</code> ein, schreibe etwas hinein und committe. Danach ist der Ordner angelegt und du kannst Fotos hochladen.</div>
+</div>
+
+<!-- MEHRERE FOTOS -->
+<div class="card">
+<h2>🔄 Mehrere Fotos auf einmal hochladen</h2>
+<p style="font-size:13px;color:#4b5563;margin-bottom:12px">Im Upload-Dialog kannst du mehrere Dateien gleichzeitig hochladen — einfach alle umbenannten Fotos auf einmal in das Fenster ziehen. Ein einziger „Commit changes" reicht für alle.</p>
+<div class="tip"><strong>Empfohlene Reihenfolge:</strong> Alle Fotos zuerst umbenennen, dann alle auf einmal hochladen. So sparst du Zeit.</div>
+</div>
+
+<!-- EIGENE FOTOS ERSETZEN -->
+<div class="card">
+<h2>✏️ Vorhandenes Foto ersetzen</h2>
+<p style="font-size:13px;color:#4b5563;margin-bottom:12px">Wenn du ein Platzhalterbild durch dein eigenes Foto ersetzen möchtest:</p>
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <div class="step-title">Einfach hochladen mit gleichem Namen</div>
+    <div class="step-desc">Lade dein neues Foto mit <strong>exakt demselben Dateinamen</strong> in den <code>fotos/</code>-Ordner hoch (z.B. <code>bastia.jpg</code>). GitHub fragt automatisch ob du es ersetzen möchtest — bestätige mit „Commit changes".</div>
+  </div>
+</div>
+<div class="tip"><strong>Kein Bearbeiten der HTML-Datei nötig</strong> — der Reiseplan lädt automatisch immer die aktuelle Version des Fotos aus dem <code>fotos/</code>-Ordner.</div>
+</div>
+
+<!-- NEUE FOTO-STATIONEN HINZUFÜGEN -->
+<div class="card">
+<h2>➕ Neue Fotostation hinzufügen</h2>
+<p style="font-size:13px;color:#4b5563;margin-bottom:12px">Möchtest du für einen weiteren Stop ein Foto hinzufügen (der noch kein Foto hat)? Das geht mit einer kleinen Änderung in der <code>index.html</code>:</p>
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <div class="step-title">Foto hochladen</div>
+    <div class="step-desc">Lade dein Foto z.B. als <code>fotos/mein_neues_foto.jpg</code> in den Ordner hoch.</div>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    <div class="step-title">index.html bearbeiten</div>
+    <div class="step-desc">Klicke in GitHub auf <code>index.html</code> → Stift-Symbol (Edit) → Suche mit <code>Strg+F</code> nach dem Namen des Stops, z.B. <code>Gorges du Tavignano</code>. Füge direkt nach <code>d:"...",</code> folgende Zeile ein:</div>
+  </div>
+</div>
+<div style="background:#1a1a18;color:#86efac;padding:10px 14px;border-radius:8px;font-family:monospace;font-size:12px;margin:8px 0 12px">photo:{url:"fotos/mein_neues_foto.jpg",alt:"Beschreibung",credit:"© Dein Name"},</div>
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-body">
+    <div class="step-title">Speichern</div>
+    <div class="step-desc">„Commit changes" klicken — fertig.</div>
+  </div>
+</div>
+</div>
+
+<!-- TIPPS -->
+<div class="card">
+<h2>💡 Tipps für beste Ergebnisse</h2>
+<div class="step">
+  <div class="step-num">📐</div>
+  <div class="step-body">
+    <div class="step-title">Querformat bevorzugen</div>
+    <div class="step-desc">Fotos im Querformat (Landschaft, 3:2 oder 16:9) sehen am besten aus. Hochformat-Fotos werden automatisch zentriert, können aber abgeschnitten wirken.</div>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">🌅</div>
+  <div class="step-body">
+    <div class="step-title">Beste Motive</div>
+    <div class="step-desc">Panoramen, Landschaften, Gebäude und Strände. Weniger geeignet: Porträtfotos (werden stark beschnitten) und Nachtfotos (oft zu dunkel in der Vorschau).</div>
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">📱</div>
+  <div class="step-body">
+    <div class="step-title">iPhone HEIC → JPG</div>
+    <div class="step-desc">Mac: Foto in Vorschau öffnen → Ablage → Exportieren → Format: JPEG. Windows: Foto öffnen → Drucken → Microsoft Print to PDF (oder Paint als JPEG speichern).</div>
+  </div>
+</div>
+</div>
+
+<p style="text-align:center;font-size:11px;color:#b4b2a9;margin-top:1rem">Diese Anleitung bezieht sich auf den Korsika-Reiseplan unter index.html + fotos/-Ordner</p>
+</div>
+</body>
+</html>
